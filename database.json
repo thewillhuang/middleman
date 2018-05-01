@@ -1,0 +1,10 @@
+{
+  "dev": {
+    "driver": "pg",
+    "user": "williamhuang",
+    "password": "",
+    "host": "localhost",
+    "database": "mass-consensus"
+  },
+  "sql-file": true
+}

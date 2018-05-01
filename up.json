@@ -1,0 +1,26 @@
+{
+  "name": "gql-api",
+  "profile": "default",
+  "hooks": {
+    "build": "rm dist/makeCache.js"
+  },
+  "proxy": {
+    "command": "PORT=$PORT NODE_ENV=$UP_STAGE node dist/main"
+  },
+  "lambda": {
+    "memory": 512
+  },
+  "stages": {
+    "production": {
+      "domain": "api.wehzhen.com"
+    },
+    "staging": {
+      "domain": "qa.api.wehzhen.com"
+    },
+    "development": {
+      "proxy": {
+        "command": "PORT=$PORT NODE_ENV=$UP_STAGE node dist/main"
+      }
+    }
+  }
+}
