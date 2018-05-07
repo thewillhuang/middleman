@@ -25,7 +25,7 @@ export const POSTGRAPHQLCONFIG = {
   disableQueryLog: isProduction,
   extendedErrors: ['hint', 'detail', 'errcode'],
   jwtSecret: JWT_SECRET,
-  jwtPgTypeIdentifier: 'mc_pub.jwt_token',
+  jwtPgTypeIdentifier: 'm_pub.jwt_token',
   pgDefaultRole: 'person_anonymous',
   legacyRelations: 'omit',
   jwtVerifyOptions: {
@@ -35,7 +35,7 @@ export const POSTGRAPHQLCONFIG = {
     issuer: 'postgraphile',
   },
 };
-export const schemas = ['mc_pub'];
+export const schemas = ['m_pub'];
 export const PGCONFIG = {
   user: auth[0],
   password: auth[1],

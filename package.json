@@ -20,10 +20,10 @@
     "prod": "up production",
     "open": "up url -o",
     "logs": "up logs -f",
-    "db:create": "createdb mass-consensus",
-    "db:drop": "dropdb mass-consensus",
+    "db:create": "createdb middleman",
+    "db:drop": "dropdb middleman",
     "db:up": "db-migrate up",
-    "db:r": "yarn db:down && yarn db:up",
+    "db:r": "yarn db:drop && yarn db:create && yarn db:down && yarn db:up",
     "db:down": "db-migrate down"
   },
   "devDependencies": {
@@ -32,6 +32,7 @@
     "babel-plugin-lodash": "^3.3.2",
     "babel-plugin-ramda": "^1.4.3",
     "babel-plugin-transform-async-to-bluebird": "^1.1.1",
+    "babel-plugin-transform-inline-imports-commonjs": "^1.2.0",
     "babel-plugin-transform-promise-to-bluebird": "^1.1.1",
     "babel-preset-env": "^1.6.1",
     "babel-preset-stage-0": "^6.24.1",
