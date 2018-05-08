@@ -19,10 +19,10 @@ CREATE TABLE m_pub.coordinate (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-create trigger coordinate_updated_at before update
-  on m_pub.coordinate
-  for each row
-  execute procedure m_pub.set_updated_at();
+CREATE TRIGGER coordinate_updated_at BEFORE UPDATE
+  ON m_pub.coordinate
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
 
 CREATE TABLE m_pub.phone (
   id BIGSERIAL PRIMARY KEY,
@@ -34,10 +34,10 @@ CREATE TABLE m_pub.phone (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-create trigger phone_updated_at before update
-  on m_pub.phone
-  for each row
-  execute procedure m_pub.set_updated_at();
+CREATE TRIGGER phone_updated_at BEFORE UPDATE
+  ON m_pub.phone
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
 
 ALTER TABLE m_pub.phone ADD CONSTRAINT phone_number UNIQUE (country_code, area_code, phone, ext);
 
@@ -52,11 +52,10 @@ CREATE TABLE m_pub.person (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-create trigger person_updated_at before update
-  on m_pub.person
-  for each row
-  execute procedure m_pub.set_updated_at();
-
+CREATE TRIGGER person_updated_at BEFORE UPDATE
+  ON m_pub.person
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
 
 CREATE TABLE m_pub.tag (
   id BIGSERIAL PRIMARY KEY,
@@ -65,10 +64,10 @@ CREATE TABLE m_pub.tag (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-create trigger tag_updated_at before update
-  on m_pub.tag
-  for each row
-  execute procedure m_pub.set_updated_at();
+CREATE TRIGGER tag_updated_at BEFORE UPDATE
+  ON m_pub.tag
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
 
 CREATE TABLE m_pub.url (
   id BIGSERIAL PRIMARY KEY,
@@ -77,10 +76,10 @@ CREATE TABLE m_pub.url (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-create trigger url_updated_at before update
-  on m_pub.url
-  for each row
-  execute procedure m_pub.set_updated_at();
+CREATE TRIGGER url_updated_at BEFORE UPDATE
+  ON m_pub.url
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
 
 CREATE TABLE m_pub.photo (
   id BIGSERIAL PRIMARY KEY,
@@ -89,10 +88,10 @@ CREATE TABLE m_pub.photo (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-create trigger photo_updated_at before update
-  on m_pub.photo
-  for each row
-  execute procedure m_pub.set_updated_at();
+CREATE TRIGGER photo_updated_at BEFORE UPDATE
+  ON m_pub.photo
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
 
 CREATE TABLE m_pub.comment (
   id BIGSERIAL PRIMARY KEY,
@@ -105,10 +104,10 @@ CREATE TABLE m_pub.comment (
 
 CREATE INDEX on m_pub.comment (person_id);
 
-create trigger comment_updated_at before update
-  on m_pub.comment
-  for each row
-  execute procedure m_pub.set_updated_at();
+CREATE TRIGGER comment_updated_at BEFORE UPDATE
+  ON m_pub.comment
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
 
 CREATE TABLE m_pub.comment_tree (
   parent_id BIGINT NOT NULL REFERENCES m_pub.comment(id) ON UPDATE CASCADE,
@@ -118,12 +117,26 @@ CREATE TABLE m_pub.comment_tree (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-create trigger comment_tree_updated_at before update
-  on m_pub.comment_tree
-  for each row
-  execute procedure m_pub.set_updated_at();
+CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
+  ON m_pub.comment_tree
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
 
 ALTER TABLE m_pub.comment_tree ADD CONSTRAINT comment_tree_pkey PRIMARY KEY (parent_id, child_id);
+
+CREATE TABLE m_pub.person_comment (
+  person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
+  comment_id BIGINT REFERENCES m_pub.comment(id) ON UPDATE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
+  ON m_pub.person
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
+
+CREATE INDEX ON m_pub.person_comment (person_id);
 
 create table m_priv.person_account (
   person_id        BIGINT PRIMARY KEY REFERENCES m_pub.person(id) ON UPDATE cascade,
@@ -229,6 +242,7 @@ grant select, insert, update, delete on table m_pub.photo to system_admin;
 grant select, insert, update, delete on table m_pub.tag to system_admin;
 grant select, insert, update, delete on table m_pub.url to system_admin;
 grant select, insert, update, delete on table m_pub.comment_tree to system_admin;
+grant select, insert, update, delete on table m_pub.person_comment to system_admin;
 
 grant select on table m_pub.comment to person, person_anonymous;
 grant select on table m_pub.coordinate to person, person_anonymous;
@@ -237,6 +251,8 @@ grant select on table m_pub.photo to person, person_anonymous;
 grant select on table m_pub.tag to person, person_anonymous;
 grant select on table m_pub.url to person, person_anonymous;
 grant select on table m_pub.comment_tree to person, person_anonymous;
+grant select on table m_pub.person_comment to person, person_anonymous;
+
 
 grant insert, update on table m_pub.comment to person;
 grant insert, update on table m_pub.coordinate to person;
@@ -245,6 +261,7 @@ grant insert, update on table m_pub.photo to person;
 grant insert, update on table m_pub.tag to person;
 grant insert, update on table m_pub.url to person;
 grant insert, update on table m_pub.comment_tree to person;
+grant insert, update on table m_pub.person_comment to person;
 
 alter table m_pub.comment enable row level security;
 
