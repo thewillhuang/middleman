@@ -4,13 +4,12 @@ create schema m_pub;
 
 alter DEFAULT privileges revoke execute on functions from public;
 
-create function m_pub.set_updated_at() returns trigger as $$
+CREATE FUNCTION m_pub.set_updated_at() returns trigger as $$
 begin
   new.updated_at := current_timestamp;
   return new;
 end;
 $$ language plpgsql;
-
 
 CREATE TABLE m_pub.coordinate (
   id BIGSERIAL PRIMARY KEY,
@@ -218,7 +217,7 @@ COMMENT ON COLUMN m_priv.person_account.password_hash is 'An opaque hash of the 
 
 create extension if not exists pgcrypto;
 
-create function m_pub.register_person(
+CREATE FUNCTION m_pub.register_person(
   first_name text,
   last_name text,
   email text,
@@ -251,7 +250,7 @@ create type m_pub.jwt_token as (
   person_id BIGINT
 );
 
-create function m_pub.authenticate(
+CREATE FUNCTION m_pub.authenticate(
   email text,
   password text
 ) returns m_pub.jwt_token as $$
@@ -272,7 +271,7 @@ $$ language plpgsql strict security definer;
 
 COMMENT ON function m_pub.authenticate(text, text) is 'Creates a JWT token that will securely identify a person and give them certain permissions.';
 
-create function m_pub.current_person() returns m_pub.person as $$
+CREATE FUNCTION m_pub.current_person() returns m_pub.person as $$
   select *
   from m_pub.person
   where id = current_setting('jwt.claims.person_id')::BIGINT
@@ -284,7 +283,7 @@ grant execute on function m_pub.authenticate(text, text) to middleman_visitor, m
 grant execute on function m_pub.current_person() to middleman_visitor, middleman_user;
 grant execute on function m_pub.register_person(text, text, text, text) to middleman_visitor;
 grant usage on schema m_pub to middleman_visitor, middleman_user, sys_admin;
-grant select on table m_pub.person to middleman_visitor, middleman_user;
+GRANT SELECT ON TABLE m_pub.person to middleman_visitor, middleman_user;
 grant update, delete on table m_pub.person to middleman_user;
 alter table m_pub.person enable row level security;
 create policy select_person on m_pub.person for select to middleman_user, middleman_visitor
@@ -294,41 +293,41 @@ create policy update_person on m_pub.person for update to person
 create policy delete_person on m_pub.person for delete to person
   using (id = current_setting('jwt.claims.person_id')::integer);
 
-grant usage on sequence m_pub.comment_id_seq to middleman_user;
-grant usage on sequence m_pub.coordinate_id_seq to middleman_user;
-grant usage on sequence m_pub.person_id_seq to middleman_user;
-grant usage on sequence m_pub.phone_id_seq to middleman_user;
-grant usage on sequence m_pub.photo_id_seq to middleman_user;
-grant usage on sequence m_pub.tag_id_seq to middleman_user;
-grant usage on sequence m_pub.url_id_seq to middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.comment_id_seq to middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.coordinate_id_seq to middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.person_id_seq to middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.phone_id_seq to middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.photo_id_seq to middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.tag_id_seq to middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.url_id_seq to middleman_user;
 
-grant select, insert, update, delete on table m_pub.comment to sys_admin;
-grant select, insert, update, delete on table m_pub.coordinate to sys_admin;
-grant select, insert, update, delete on table m_pub.phone to sys_admin;
-grant select, insert, update, delete on table m_pub.photo to sys_admin;
-grant select, insert, update, delete on table m_pub.tag to sys_admin;
-grant select, insert, update, delete on table m_pub.url to sys_admin;
-grant select, insert, update, delete on table m_pub.comment_tree to sys_admin;
-grant select, insert, update, delete on table m_pub.person_comment to sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment to sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.coordinate to sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.phone to sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.photo to sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.tag to sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.url to sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment_tree to sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.person_comment to sys_admin;
 
-grant select on table m_pub.comment to middleman_user, middleman_visitor;
-grant select on table m_pub.coordinate to middleman_user, middleman_visitor;
-grant select on table m_pub.phone to middleman_user, middleman_visitor;
-grant select on table m_pub.photo to middleman_user, middleman_visitor;
-grant select on table m_pub.tag to middleman_user, middleman_visitor;
-grant select on table m_pub.url to middleman_user, middleman_visitor;
-grant select on table m_pub.comment_tree to middleman_user, middleman_visitor;
-grant select on table m_pub.person_comment to middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.comment to middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.coordinate to middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.phone to middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.photo to middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.tag to middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.url to middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.comment_tree to middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.person_comment to middleman_user, middleman_visitor;
 
 
-grant insert, update on table m_pub.comment to middleman_user;
-grant insert, update on table m_pub.coordinate to middleman_user;
-grant insert, update on table m_pub.phone to middleman_user;
-grant insert, update on table m_pub.photo to middleman_user;
-grant insert, update on table m_pub.tag to middleman_user;
-grant insert, update on table m_pub.url to middleman_user;
-grant insert, update on table m_pub.comment_tree to middleman_user;
-grant insert, update on table m_pub.person_comment to middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.comment to middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.coordinate to middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.phone to middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.photo to middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.tag to middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.url to middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.comment_tree to middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.person_comment to middleman_user;
 
 alter table m_pub.comment enable row level security;
 
