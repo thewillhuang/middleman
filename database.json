@@ -4,7 +4,7 @@
     "user": "williamhuang",
     "password": "",
     "host": "localhost",
-    "database": "mass-consensus"
+    "database": "middleman"
   },
   "sql-file": true
 }

@@ -24,6 +24,8 @@ CREATE TRIGGER coordinate_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
+COMMENT ON TABLE m_pub.coordinate is E'@omit all';
+
 CREATE TABLE m_pub.phone (
   id BIGSERIAL PRIMARY KEY,
   country_code SMALLINT NOT NULL,
@@ -38,6 +40,8 @@ CREATE TRIGGER phone_updated_at BEFORE UPDATE
   ON m_pub.phone
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
+
+COMMENT ON TABLE m_pub.phone is E'@omit all';
 
 ALTER TABLE m_pub.phone ADD CONSTRAINT phone_number UNIQUE (country_code, area_code, phone, ext);
 
@@ -57,6 +61,8 @@ CREATE TRIGGER person_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
+COMMENT ON TABLE m_pub.person is E'@omit all';
+
 CREATE TABLE m_pub.tag (
   id BIGSERIAL PRIMARY KEY,
   tag TEXT NOT NULL UNIQUE,
@@ -68,6 +74,8 @@ CREATE TRIGGER tag_updated_at BEFORE UPDATE
   ON m_pub.tag
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
+
+COMMENT ON TABLE m_pub.tag is E'@omit all';
 
 CREATE TABLE m_pub.url (
   id BIGSERIAL PRIMARY KEY,
@@ -81,6 +89,8 @@ CREATE TRIGGER url_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
+COMMENT ON TABLE m_pub.url is E'@omit all';
+
 CREATE TABLE m_pub.photo (
   id BIGSERIAL PRIMARY KEY,
   url_id BIGINT NOT NULL REFERENCES m_pub.url(id) ON UPDATE CASCADE,
@@ -93,9 +103,11 @@ CREATE TRIGGER photo_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
+COMMENT ON TABLE m_pub.photo is E'@omit all';
+
 CREATE TABLE m_pub.comment (
   id BIGSERIAL PRIMARY KEY,
-  commentary TEXT NOT NULL,
+  commentary TEXT,
   person_id BIGINT NOT NULL REFERENCES m_pub.person(id) ON UPDATE CASCADE,
   stars SMALLINT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
@@ -109,6 +121,8 @@ CREATE TRIGGER comment_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
+COMMENT ON TABLE m_pub.comment is E'@omit all';
+
 CREATE TABLE m_pub.comment_tree (
   parent_id BIGINT NOT NULL REFERENCES m_pub.comment(id) ON UPDATE CASCADE,
   child_id BIGINT NOT NULL REFERENCES m_pub.comment(id) ON UPDATE CASCADE,
@@ -121,6 +135,8 @@ CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
   ON m_pub.comment_tree
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
+
+COMMENT ON TABLE m_pub.comment_tree is E'@omit all';
 
 ALTER TABLE m_pub.comment_tree ADD CONSTRAINT comment_tree_pkey PRIMARY KEY (parent_id, child_id);
 
@@ -136,7 +152,23 @@ CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
-CREATE INDEX ON m_pub.person_comment (person_id);
+COMMENT ON TABLE m_pub.person_comment is E'@omit all';
+
+CREATE TABLE m_pub.person_tag (
+  person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
+  tag_id BIGINT REFERENCES m_pub.tag(id) ON UPDATE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TRIGGER person_tag_updated_at BEFORE UPDATE
+  ON m_pub.person
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
+
+CREATE INDEX ON m_pub.person_tag (person_id);
+
+COMMENT ON TABLE m_pub.person_tag is E'@omit all';
 
 create table m_priv.person_account (
   person_id        BIGINT PRIMARY KEY REFERENCES m_pub.person(id) ON UPDATE cascade,
@@ -144,10 +176,10 @@ create table m_priv.person_account (
   password_hash    TEXT NOT NULL
 );
 
-comment on table m_priv.person_account is 'Private information about a person’s account.';
-comment on column m_priv.person_account.person_id is 'The id of the person associated with this account.';
-comment on column m_priv.person_account.email is 'The email address of the person.';
-comment on column m_priv.person_account.password_hash is 'An opaque hash of the person’s password.';
+COMMENT ON TABLE m_priv.person_account is 'Private information about a person’s account.';
+COMMENT ON COLUMN m_priv.person_account.person_id is 'The id of the person associated with this account.';
+COMMENT ON COLUMN m_priv.person_account.email is 'The email address of the person.';
+COMMENT ON COLUMN m_priv.person_account.password_hash is 'An opaque hash of the person’s password.';
 
 create extension if not exists pgcrypto;
 
@@ -171,13 +203,13 @@ begin
 end;
 $$ language plpgsql strict security definer;
 
-comment on function m_pub.register_person(text, text, text, text) is 'Registers a single person and creates an account in our forum.';
+COMMENT ON function m_pub.register_person(text, text, text, text) is 'Registers a single person and creates an account in our forum.';
 
-create role system_admin login password 'voodoo3d';
-create role person_anonymous;
-grant person_anonymous to system_admin;
-create role person;
-grant person to system_admin;
+create role sys_admin login password 'voodoo3d';
+create role app_visitor;
+grant app_visitor to sys_admin;
+create role app_user;
+grant app_user to sys_admin;
 
 create type m_pub.jwt_token as (
   role text,
@@ -203,7 +235,7 @@ begin
 end;
 $$ language plpgsql strict security definer;
 
-comment on function m_pub.authenticate(text, text) is 'Creates a JWT token that will securely identify a person and give them certain permissions.';
+COMMENT ON function m_pub.authenticate(text, text) is 'Creates a JWT token that will securely identify a person and give them certain permissions.';
 
 create function m_pub.current_person() returns m_pub.person as $$
   select *
@@ -211,68 +243,68 @@ create function m_pub.current_person() returns m_pub.person as $$
   where id = current_setting('jwt.claims.person_id')::BIGINT
 $$ language sql stable;
 
-comment on function m_pub.current_person() is 'Gets the person who was identified by our JWT.';
+COMMENT ON function m_pub.current_person() is 'Gets the person who was identified by our JWT.';
 
-grant execute on function m_pub.authenticate(text, text) to person_anonymous, person;
-grant execute on function m_pub.current_person() to person_anonymous, person;
-grant execute on function m_pub.register_person(text, text, text, text) to person_anonymous;
-grant usage on schema m_pub to person_anonymous, person, system_admin;
-grant select on table m_pub.person to person_anonymous, person;
-grant update, delete on table m_pub.person to person;
+grant execute on function m_pub.authenticate(text, text) to app_visitor, app_user;
+grant execute on function m_pub.current_person() to app_visitor, app_user;
+grant execute on function m_pub.register_person(text, text, text, text) to app_visitor;
+grant usage on schema m_pub to app_visitor, app_user, sys_admin;
+grant select on table m_pub.person to app_visitor, app_user;
+grant update, delete on table m_pub.person to app_user;
 alter table m_pub.person enable row level security;
-create policy select_person on m_pub.person for select to person, person_anonymous
+create policy select_person on m_pub.person for select to app_user, app_visitor
   using (true);
 create policy update_person on m_pub.person for update to person
   using (id = current_setting('jwt.claims.person_id')::integer);
 create policy delete_person on m_pub.person for delete to person
   using (id = current_setting('jwt.claims.person_id')::integer);
 
-grant usage on sequence m_pub.comment_id_seq to person;
-grant usage on sequence m_pub.coordinate_id_seq to person;
-grant usage on sequence m_pub.person_id_seq to person;
-grant usage on sequence m_pub.phone_id_seq to person;
-grant usage on sequence m_pub.photo_id_seq to person;
-grant usage on sequence m_pub.tag_id_seq to person;
-grant usage on sequence m_pub.url_id_seq to person;
+grant usage on sequence m_pub.comment_id_seq to app_user;
+grant usage on sequence m_pub.coordinate_id_seq to app_user;
+grant usage on sequence m_pub.person_id_seq to app_user;
+grant usage on sequence m_pub.phone_id_seq to app_user;
+grant usage on sequence m_pub.photo_id_seq to app_user;
+grant usage on sequence m_pub.tag_id_seq to app_user;
+grant usage on sequence m_pub.url_id_seq to app_user;
 
-grant select, insert, update, delete on table m_pub.comment to system_admin;
-grant select, insert, update, delete on table m_pub.coordinate to system_admin;
-grant select, insert, update, delete on table m_pub.phone to system_admin;
-grant select, insert, update, delete on table m_pub.photo to system_admin;
-grant select, insert, update, delete on table m_pub.tag to system_admin;
-grant select, insert, update, delete on table m_pub.url to system_admin;
-grant select, insert, update, delete on table m_pub.comment_tree to system_admin;
-grant select, insert, update, delete on table m_pub.person_comment to system_admin;
+grant select, insert, update, delete on table m_pub.comment to sys_admin;
+grant select, insert, update, delete on table m_pub.coordinate to sys_admin;
+grant select, insert, update, delete on table m_pub.phone to sys_admin;
+grant select, insert, update, delete on table m_pub.photo to sys_admin;
+grant select, insert, update, delete on table m_pub.tag to sys_admin;
+grant select, insert, update, delete on table m_pub.url to sys_admin;
+grant select, insert, update, delete on table m_pub.comment_tree to sys_admin;
+grant select, insert, update, delete on table m_pub.person_comment to sys_admin;
 
-grant select on table m_pub.comment to person, person_anonymous;
-grant select on table m_pub.coordinate to person, person_anonymous;
-grant select on table m_pub.phone to person, person_anonymous;
-grant select on table m_pub.photo to person, person_anonymous;
-grant select on table m_pub.tag to person, person_anonymous;
-grant select on table m_pub.url to person, person_anonymous;
-grant select on table m_pub.comment_tree to person, person_anonymous;
-grant select on table m_pub.person_comment to person, person_anonymous;
+grant select on table m_pub.comment to app_user, app_visitor;
+grant select on table m_pub.coordinate to app_user, app_visitor;
+grant select on table m_pub.phone to app_user, app_visitor;
+grant select on table m_pub.photo to app_user, app_visitor;
+grant select on table m_pub.tag to app_user, app_visitor;
+grant select on table m_pub.url to app_user, app_visitor;
+grant select on table m_pub.comment_tree to app_user, app_visitor;
+grant select on table m_pub.person_comment to app_user, app_visitor;
 
 
-grant insert, update on table m_pub.comment to person;
-grant insert, update on table m_pub.coordinate to person;
-grant insert, update on table m_pub.phone to person;
-grant insert, update on table m_pub.photo to person;
-grant insert, update on table m_pub.tag to person;
-grant insert, update on table m_pub.url to person;
-grant insert, update on table m_pub.comment_tree to person;
-grant insert, update on table m_pub.person_comment to person;
+grant insert, update on table m_pub.comment to app_user;
+grant insert, update on table m_pub.coordinate to app_user;
+grant insert, update on table m_pub.phone to app_user;
+grant insert, update on table m_pub.photo to app_user;
+grant insert, update on table m_pub.tag to app_user;
+grant insert, update on table m_pub.url to app_user;
+grant insert, update on table m_pub.comment_tree to app_user;
+grant insert, update on table m_pub.person_comment to app_user;
 
 alter table m_pub.comment enable row level security;
 
-create policy select_comment on m_pub.comment for select to person, person_anonymous
+create policy select_COMMENT ON m_pub.comment for select to app_user, app_visitor
   using (true);
 
-create policy insert_comment on m_pub.comment for insert to person
+create policy insert_COMMENT ON m_pub.comment for insert to app_user
   with check (person_id = current_setting('jwt.claims.person_id')::integer);
 
-create policy update_comment on m_pub.comment for update to person
+create policy update_COMMENT ON m_pub.comment for update to app_user
   using (person_id = current_setting('jwt.claims.person_id')::integer);
 
-create policy delete_comment on m_pub.comment for delete to person
+create policy delete_COMMENT ON m_pub.comment for delete to app_user
   using (person_id = current_setting('jwt.claims.person_id')::integer);

@@ -8,7 +8,7 @@ const {
   PORT = 3000,
   NODE_ENV = 'development',
   JWT_SECRET = 'lololol',
-  DB_URL = 'postgresql://williamhuang@localhost/mass-consensus',
+  DB_URL = 'postgresql://williamhuang@localhost/middleman',
 } = process.env;
 
 const params = url.parse(DB_URL);
