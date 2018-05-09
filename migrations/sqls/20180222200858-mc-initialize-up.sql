@@ -2,9 +2,9 @@
 create schema m_priv;
 create schema m_pub;
 
-alter DEFAULT privileges revoke execute on functions from public;
+alter DEFAULT privileges revoke EXECUTE ON FUNCTIONs from public;
 
-CREATE FUNCTION m_pub.set_updated_at() returns trigger as $$
+CREATE FUNCTION m_pub.set_updated_at() returns trigger AS $$
 begin
   new.updated_at := current_timestamp;
   return new;
@@ -15,8 +15,8 @@ CREATE TABLE m_pub.coordinate (
   id BIGSERIAL PRIMARY KEY,
   geohash TEXT NOT NULL UNIQUE,
   address TEXT,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER coordinate_updated_at BEFORE UPDATE
@@ -24,7 +24,7 @@ CREATE TRIGGER coordinate_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
-COMMENT ON TABLE m_pub.coordinate is E'@omit all';
+COMMENT ON TABLE m_pub.coordinate IS E'@omit all';
 
 CREATE TABLE m_pub.phone (
   id BIGSERIAL PRIMARY KEY,
@@ -32,8 +32,8 @@ CREATE TABLE m_pub.phone (
   area_code SMALLINT NOT NULL,
   phone integer NOT NULL,
   ext integer,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER phone_updated_at BEFORE UPDATE
@@ -41,7 +41,7 @@ CREATE TRIGGER phone_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
-COMMENT ON TABLE m_pub.phone is E'@omit all';
+COMMENT ON TABLE m_pub.phone IS E'@omit all';
 
 ALTER TABLE m_pub.phone ADD CONSTRAINT phone_number UNIQUE (country_code, area_code, phone, ext);
 
@@ -52,8 +52,8 @@ CREATE TABLE m_pub.person (
   phone_id BIGINT REFERENCES m_pub.phone(id) ON UPDATE CASCADE,
   coordinate_id BIGINT REFERENCES m_pub.coordinate(id) ON UPDATE CASCADE,
   is_client BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER person_updated_at BEFORE UPDATE
@@ -61,13 +61,13 @@ CREATE TRIGGER person_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
-COMMENT ON TABLE m_pub.person is E'@omit all';
+COMMENT ON TABLE m_pub.person IS E'@omit all';
 
 CREATE TABLE m_pub.tag (
   id BIGSERIAL PRIMARY KEY,
   tag TEXT NOT NULL UNIQUE,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER tag_updated_at BEFORE UPDATE
@@ -75,13 +75,13 @@ CREATE TRIGGER tag_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
-COMMENT ON TABLE m_pub.tag is E'@omit all';
+COMMENT ON TABLE m_pub.tag IS E'@omit all';
 
 CREATE TABLE m_pub.url (
   id BIGSERIAL PRIMARY KEY,
   url TEXT NOT NULL UNIQUE,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER url_updated_at BEFORE UPDATE
@@ -89,13 +89,13 @@ CREATE TRIGGER url_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
-COMMENT ON TABLE m_pub.url is E'@omit all';
+COMMENT ON TABLE m_pub.url IS E'@omit all';
 
 CREATE TABLE m_pub.photo (
   id BIGSERIAL PRIMARY KEY,
   url_id BIGINT NOT NULL REFERENCES m_pub.url(id) ON UPDATE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER photo_updated_at BEFORE UPDATE
@@ -103,15 +103,15 @@ CREATE TRIGGER photo_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
-COMMENT ON TABLE m_pub.photo is E'@omit all';
+COMMENT ON TABLE m_pub.photo IS E'@omit all';
 
 CREATE TABLE m_pub.comment (
   id BIGSERIAL PRIMARY KEY,
   commentary TEXT,
   person_id BIGINT NOT NULL REFERENCES m_pub.person(id) ON UPDATE CASCADE,
   stars SMALLINT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX on m_pub.comment (person_id);
@@ -121,14 +121,14 @@ CREATE TRIGGER comment_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
-COMMENT ON TABLE m_pub.comment is E'@omit all';
+COMMENT ON TABLE m_pub.comment IS E'@omit all';
 
 CREATE TABLE m_pub.comment_tree (
   parent_id BIGINT NOT NULL REFERENCES m_pub.comment(id) ON UPDATE CASCADE,
   child_id BIGINT NOT NULL REFERENCES m_pub.comment(id) ON UPDATE CASCADE,
   depth SMALLINT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
@@ -136,15 +136,15 @@ CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
-COMMENT ON TABLE m_pub.comment_tree is E'@omit all';
+COMMENT ON TABLE m_pub.comment_tree IS E'@omit all';
 
 ALTER TABLE m_pub.comment_tree ADD CONSTRAINT comment_tree_pkey PRIMARY KEY (parent_id, child_id);
 
 CREATE TABLE m_pub.person_comment (
   person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
   comment_id BIGINT REFERENCES m_pub.comment(id) ON UPDATE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
@@ -152,13 +152,13 @@ CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
-COMMENT ON TABLE m_pub.person_comment is E'@omit all';
+COMMENT ON TABLE m_pub.person_comment IS E'@omit all';
 
 CREATE TABLE m_pub.person_tag (
   person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
   tag_id BIGINT REFERENCES m_pub.tag(id) ON UPDATE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER person_tag_updated_at BEFORE UPDATE
@@ -168,9 +168,9 @@ CREATE TRIGGER person_tag_updated_at BEFORE UPDATE
 
 CREATE INDEX ON m_pub.person_tag (person_id);
 
-COMMENT ON TABLE m_pub.person_tag is E'@omit all';
+COMMENT ON TABLE m_pub.person_tag IS E'@omit all';
 
-CREATE TYPE m_pub.job_status as enum (
+CREATE TYPE m_pub.job_status AS ENUM (
   'filled',
   'completed',
   'open'
@@ -181,8 +181,8 @@ CREATE TABLE m_pub.job (
   person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
   coordinate_id BIGINT REFERENCES m_pub.coordinate(id) ON UPDATE CASCADE,
   status m_pub.job_status,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER job_updated_at BEFORE UPDATE
@@ -193,8 +193,8 @@ CREATE TRIGGER job_updated_at BEFORE UPDATE
 CREATE TABLE m_pub.job_tag (
   job_id BIGINT REFERENCES m_pub.job(id) ON UPDATE CASCADE,
   tag_id BIGINT REFERENCES m_pub.tag(id) ON UPDATE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER job_tag_updated_at BEFORE UPDATE
@@ -222,30 +222,30 @@ CREATE FUNCTION m_pub.register_person(
   last_name text,
   email text,
   password text
-) returns m_pub.person as $$
+) returns m_pub.person AS $$
 declare
   person m_pub.person;
 begin
-  insert into m_pub.person (first_name, last_name) values
+  INSERT INTO m_pub.person (first_name, last_name) values
     (first_name, last_name)
-    returning * into person;
+    returning * INTO person;
 
-  insert into m_priv.person_account (person_id, email, password_hash) values
+  INSERT INTO m_priv.person_account (person_id, email, password_hash) values
     (person.id, email, crypt(password, gen_salt('bf')));
 
   return person;
 end;
 $$ language plpgsql strict security definer;
 
-COMMENT ON function m_pub.register_person(text, text, text, text) is 'Registers a single person and creates an account in our forum.';
+COMMENT ON FUNCTION m_pub.register_person(TEXT, TEXT, TEXT, TEXT) is 'Registers a single person and creates an account in our forum.';
 
-create role sys_admin login password 'voodoo3d';
-create role middleman_visitor;
-grant middleman_visitor to sys_admin;
-create role middleman_user;
-grant middleman_user to sys_admin;
+CREATE ROLE sys_admin LOGIN PASSWORD 'voodoo3d';
+CREATE ROLE middleman_visitor;
+GRANT middleman_visitor TO sys_admin;
+CREATE ROLE middleman_user;
+GRANT middleman_user TO sys_admin;
 
-create type m_pub.jwt_token as (
+CREATE TYPE m_pub.jwt_token AS (
   role text,
   person_id BIGINT
 );
@@ -253,12 +253,12 @@ create type m_pub.jwt_token as (
 CREATE FUNCTION m_pub.authenticate(
   email text,
   password text
-) returns m_pub.jwt_token as $$
+) returns m_pub.jwt_token AS $$
 declare
   account m_priv.person_account;
 begin
-  select a.* into account
-  from m_priv.person_account as a
+  SELECT a.* INTO account
+  from m_priv.person_account AS a
   where a.email = $1;
 
   if account.password_hash = crypt(password, account.password_hash) then
@@ -269,76 +269,76 @@ begin
 end;
 $$ language plpgsql strict security definer;
 
-COMMENT ON function m_pub.authenticate(text, text) is 'Creates a JWT token that will securely identify a person and give them certain permissions.';
+COMMENT ON FUNCTION m_pub.authenticate(TEXT, TEXT) is 'Creates a JWT token that will securely identify a person and give them certain permissions.';
 
-CREATE FUNCTION m_pub.current_person() returns m_pub.person as $$
-  select *
+CREATE FUNCTION m_pub.current_person() returns m_pub.person AS $$
+  SELECT *
   from m_pub.person
   where id = current_setting('jwt.claims.person_id')::BIGINT
 $$ language sql stable;
 
-COMMENT ON function m_pub.current_person() is 'Gets the person who was identified by our JWT.';
+COMMENT ON FUNCTION m_pub.current_person() is 'Gets the person who wAS identified by our JWT.';
 
-grant execute on function m_pub.authenticate(text, text) to middleman_visitor, middleman_user;
-grant execute on function m_pub.current_person() to middleman_visitor, middleman_user;
-grant execute on function m_pub.register_person(text, text, text, text) to middleman_visitor;
-grant usage on schema m_pub to middleman_visitor, middleman_user, sys_admin;
-GRANT SELECT ON TABLE m_pub.person to middleman_visitor, middleman_user;
-grant update, delete on table m_pub.person to middleman_user;
+GRANT EXECUTE ON FUNCTION m_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
+GRANT EXECUTE ON FUNCTION m_pub.current_person() TO middleman_visitor, middleman_user;
+GRANT EXECUTE ON FUNCTION m_pub.register_person(TEXT, TEXT, TEXT, TEXT) TO middleman_visitor;
+GRANT usage on schema m_pub TO middleman_visitor, middleman_user, sys_admin;
+GRANT SELECT ON TABLE m_pub.person TO middleman_visitor, middleman_user;
+GRANT UPDATE, DELETE ON TABLE m_pub.person TO middleman_user;
 alter table m_pub.person enable row level security;
-create policy select_person on m_pub.person for select to middleman_user, middleman_visitor
-  using (true);
-create policy update_person on m_pub.person for update to person
-  using (id = current_setting('jwt.claims.person_id')::integer);
-create policy delete_person on m_pub.person for delete to person
-  using (id = current_setting('jwt.claims.person_id')::integer);
+CREATE POLICY select_person on m_pub.person for SELECT TO middleman_user, middleman_visitor
+  USING (true);
+CREATE POLICY update_person on m_pub.person for UPDATE TO person
+  USING (id = current_setting('jwt.claims.person_id')::INTEGER);
+CREATE POLICY delete_person on m_pub.person for delete TO person
+  USING (id = current_setting('jwt.claims.person_id')::INTEGER);
 
-GRANT USAGE ON SEQUENCE m_pub.comment_id_seq to middleman_user;
-GRANT USAGE ON SEQUENCE m_pub.coordinate_id_seq to middleman_user;
-GRANT USAGE ON SEQUENCE m_pub.person_id_seq to middleman_user;
-GRANT USAGE ON SEQUENCE m_pub.phone_id_seq to middleman_user;
-GRANT USAGE ON SEQUENCE m_pub.photo_id_seq to middleman_user;
-GRANT USAGE ON SEQUENCE m_pub.tag_id_seq to middleman_user;
-GRANT USAGE ON SEQUENCE m_pub.url_id_seq to middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.comment_id_seq TO middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.coordinate_id_seq TO middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.person_id_seq TO middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.phone_id_seq TO middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.photo_id_seq TO middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.tag_id_seq TO middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.url_id_seq TO middleman_user;
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment to sys_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.coordinate to sys_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.phone to sys_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.photo to sys_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.tag to sys_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.url to sys_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment_tree to sys_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.person_comment to sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment TO sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.coordinate TO sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.phone TO sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.photo TO sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.tag TO sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.url TO sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment_tree TO sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.person_comment TO sys_admin;
 
-GRANT SELECT ON TABLE m_pub.comment to middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE m_pub.coordinate to middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE m_pub.phone to middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE m_pub.photo to middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE m_pub.tag to middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE m_pub.url to middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE m_pub.comment_tree to middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE m_pub.person_comment to middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.comment TO middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.coordinate TO middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.phone TO middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.photo TO middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.tag TO middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.url TO middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.comment_tree TO middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.person_comment TO middleman_user, middleman_visitor;
 
 
-GRANT INSERT, UPDATE ON TABLE m_pub.comment to middleman_user;
-GRANT INSERT, UPDATE ON TABLE m_pub.coordinate to middleman_user;
-GRANT INSERT, UPDATE ON TABLE m_pub.phone to middleman_user;
-GRANT INSERT, UPDATE ON TABLE m_pub.photo to middleman_user;
-GRANT INSERT, UPDATE ON TABLE m_pub.tag to middleman_user;
-GRANT INSERT, UPDATE ON TABLE m_pub.url to middleman_user;
-GRANT INSERT, UPDATE ON TABLE m_pub.comment_tree to middleman_user;
-GRANT INSERT, UPDATE ON TABLE m_pub.person_comment to middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.comment TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.coordinate TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.phone TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.photo TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.tag TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.url TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.comment_tree TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.person_comment TO middleman_user;
 
 alter table m_pub.comment enable row level security;
 
-create policy select_COMMENT ON m_pub.comment for select to middleman_user, middleman_visitor
-  using (true);
+CREATE POLICY select_COMMENT ON m_pub.comment for SELECT TO middleman_user, middleman_visitor
+  USING (true);
 
-create policy insert_COMMENT ON m_pub.comment for insert to middleman_user
-  with check (person_id = current_setting('jwt.claims.person_id')::integer);
+CREATE POLICY insert_COMMENT ON m_pub.comment for INSERT TO middleman_user
+  WITH CHECK (person_id = current_setting('jwt.claims.person_id')::INTEGER);
 
-create policy update_COMMENT ON m_pub.comment for update to middleman_user
-  using (person_id = current_setting('jwt.claims.person_id')::integer);
+CREATE POLICY update_COMMENT ON m_pub.comment for UPDATE TO middleman_user
+  USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
 
-create policy delete_COMMENT ON m_pub.comment for delete to middleman_user
-  using (person_id = current_setting('jwt.claims.person_id')::integer);
+CREATE POLICY delete_COMMENT ON m_pub.comment for DELETE TO middleman_user
+  USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
