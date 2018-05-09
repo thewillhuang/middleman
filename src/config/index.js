@@ -28,6 +28,7 @@ export const POSTGRAPHQLCONFIG = {
   jwtPgTypeIdentifier: 'm_pub.jwt_token',
   pgDefaultRole: 'middleman_visitor',
   legacyRelations: 'omit',
+  exportGqlSchemaPath: join(__dirname, '../../dist', 'schema.graphql'),
   jwtVerifyOptions: {
     algorithms: ['HS256'],
     maxAge: '1h',
@@ -35,6 +36,7 @@ export const POSTGRAPHQLCONFIG = {
     issuer: 'postgraphile',
   },
 };
+
 export const schemas = ['m_pub'];
 export const PGCONFIG = {
   user: auth[0],

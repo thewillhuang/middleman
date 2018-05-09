@@ -2910,7 +2910,7 @@ graphql-parse-resolve-info@4.0.0-beta.5:
   dependencies:
     debug ">=2 <3"
 
-"graphql@>=0.6 <0.13", graphql@^0.13.0:
+"graphql@>=0.6 <0.13", graphql@^0.13.2:
   version "0.13.2"
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-0.13.2.tgz#4c740ae3c222823e7004096f832e7b93b2108270"
   dependencies:
