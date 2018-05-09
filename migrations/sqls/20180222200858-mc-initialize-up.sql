@@ -171,11 +171,17 @@ CREATE INDEX ON m_pub.person_tag (person_id);
 
 COMMENT ON TABLE m_pub.person_tag is E'@omit all';
 
+CREATE TYPE m_pub.job_status as enum (
+  'filled',
+  'completed',
+  'open'
+);
+
 CREATE TABLE m_pub.job (
   id BIGSERIAL PRIMARY KEY,
   person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
   coordinate_id BIGINT REFERENCES m_pub.coordinate(id) ON UPDATE CASCADE,
-
+  status m_pub.job_status,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -184,8 +190,6 @@ CREATE TRIGGER job_updated_at BEFORE UPDATE
   ON m_pub.job
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
-
-COMMENT ON TABLE m_pub.job is E'@omit all';
 
 CREATE TABLE m_pub.job_tag (
   job_id BIGINT REFERENCES m_pub.job(id) ON UPDATE CASCADE,
