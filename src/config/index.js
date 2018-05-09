@@ -15,12 +15,17 @@ const params = url.parse(DB_URL);
 const auth = params.auth.split(':');
 
 export const ENV = NODE_ENV;
+
 export const isDevelopment = NODE_ENV === 'development';
+
 export const isProduction = NODE_ENV === 'production';
+
 export const APPPORT = PORT;
+
 export const POSTGRAPHQLCONFIG = {
   dynamicJson: true,
   graphiql: true,
+  watchPg: isDevelopment,
   graphqlRoute: '/',
   disableQueryLog: isProduction,
   extendedErrors: ['hint', 'detail', 'errcode'],
@@ -38,6 +43,7 @@ export const POSTGRAPHQLCONFIG = {
 };
 
 export const schemas = ['m_pub'];
+
 export const PGCONFIG = {
   user: auth[0],
   password: auth[1],
@@ -48,6 +54,7 @@ export const PGCONFIG = {
   connectionTimeoutMillis: 5000,
   Promise: bluebird,
 };
+
 export const cachePath = join(__dirname, '../../dist/postgraphile.cache');
 
 if (!isDevelopment) {
