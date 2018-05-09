@@ -206,10 +206,10 @@ $$ language plpgsql strict security definer;
 COMMENT ON function m_pub.register_person(text, text, text, text) is 'Registers a single person and creates an account in our forum.';
 
 create role sys_admin login password 'voodoo3d';
-create role app_visitor;
-grant app_visitor to sys_admin;
-create role app_user;
-grant app_user to sys_admin;
+create role middleman_visitor;
+grant middleman_visitor to sys_admin;
+create role middleman_user;
+grant middleman_user to sys_admin;
 
 create type m_pub.jwt_token as (
   role text,
@@ -245,27 +245,27 @@ $$ language sql stable;
 
 COMMENT ON function m_pub.current_person() is 'Gets the person who was identified by our JWT.';
 
-grant execute on function m_pub.authenticate(text, text) to app_visitor, app_user;
-grant execute on function m_pub.current_person() to app_visitor, app_user;
-grant execute on function m_pub.register_person(text, text, text, text) to app_visitor;
-grant usage on schema m_pub to app_visitor, app_user, sys_admin;
-grant select on table m_pub.person to app_visitor, app_user;
-grant update, delete on table m_pub.person to app_user;
+grant execute on function m_pub.authenticate(text, text) to middleman_visitor, middleman_user;
+grant execute on function m_pub.current_person() to middleman_visitor, middleman_user;
+grant execute on function m_pub.register_person(text, text, text, text) to middleman_visitor;
+grant usage on schema m_pub to middleman_visitor, middleman_user, sys_admin;
+grant select on table m_pub.person to middleman_visitor, middleman_user;
+grant update, delete on table m_pub.person to middleman_user;
 alter table m_pub.person enable row level security;
-create policy select_person on m_pub.person for select to app_user, app_visitor
+create policy select_person on m_pub.person for select to middleman_user, middleman_visitor
   using (true);
 create policy update_person on m_pub.person for update to person
   using (id = current_setting('jwt.claims.person_id')::integer);
 create policy delete_person on m_pub.person for delete to person
   using (id = current_setting('jwt.claims.person_id')::integer);
 
-grant usage on sequence m_pub.comment_id_seq to app_user;
-grant usage on sequence m_pub.coordinate_id_seq to app_user;
-grant usage on sequence m_pub.person_id_seq to app_user;
-grant usage on sequence m_pub.phone_id_seq to app_user;
-grant usage on sequence m_pub.photo_id_seq to app_user;
-grant usage on sequence m_pub.tag_id_seq to app_user;
-grant usage on sequence m_pub.url_id_seq to app_user;
+grant usage on sequence m_pub.comment_id_seq to middleman_user;
+grant usage on sequence m_pub.coordinate_id_seq to middleman_user;
+grant usage on sequence m_pub.person_id_seq to middleman_user;
+grant usage on sequence m_pub.phone_id_seq to middleman_user;
+grant usage on sequence m_pub.photo_id_seq to middleman_user;
+grant usage on sequence m_pub.tag_id_seq to middleman_user;
+grant usage on sequence m_pub.url_id_seq to middleman_user;
 
 grant select, insert, update, delete on table m_pub.comment to sys_admin;
 grant select, insert, update, delete on table m_pub.coordinate to sys_admin;
@@ -276,35 +276,35 @@ grant select, insert, update, delete on table m_pub.url to sys_admin;
 grant select, insert, update, delete on table m_pub.comment_tree to sys_admin;
 grant select, insert, update, delete on table m_pub.person_comment to sys_admin;
 
-grant select on table m_pub.comment to app_user, app_visitor;
-grant select on table m_pub.coordinate to app_user, app_visitor;
-grant select on table m_pub.phone to app_user, app_visitor;
-grant select on table m_pub.photo to app_user, app_visitor;
-grant select on table m_pub.tag to app_user, app_visitor;
-grant select on table m_pub.url to app_user, app_visitor;
-grant select on table m_pub.comment_tree to app_user, app_visitor;
-grant select on table m_pub.person_comment to app_user, app_visitor;
+grant select on table m_pub.comment to middleman_user, middleman_visitor;
+grant select on table m_pub.coordinate to middleman_user, middleman_visitor;
+grant select on table m_pub.phone to middleman_user, middleman_visitor;
+grant select on table m_pub.photo to middleman_user, middleman_visitor;
+grant select on table m_pub.tag to middleman_user, middleman_visitor;
+grant select on table m_pub.url to middleman_user, middleman_visitor;
+grant select on table m_pub.comment_tree to middleman_user, middleman_visitor;
+grant select on table m_pub.person_comment to middleman_user, middleman_visitor;
 
 
-grant insert, update on table m_pub.comment to app_user;
-grant insert, update on table m_pub.coordinate to app_user;
-grant insert, update on table m_pub.phone to app_user;
-grant insert, update on table m_pub.photo to app_user;
-grant insert, update on table m_pub.tag to app_user;
-grant insert, update on table m_pub.url to app_user;
-grant insert, update on table m_pub.comment_tree to app_user;
-grant insert, update on table m_pub.person_comment to app_user;
+grant insert, update on table m_pub.comment to middleman_user;
+grant insert, update on table m_pub.coordinate to middleman_user;
+grant insert, update on table m_pub.phone to middleman_user;
+grant insert, update on table m_pub.photo to middleman_user;
+grant insert, update on table m_pub.tag to middleman_user;
+grant insert, update on table m_pub.url to middleman_user;
+grant insert, update on table m_pub.comment_tree to middleman_user;
+grant insert, update on table m_pub.person_comment to middleman_user;
 
 alter table m_pub.comment enable row level security;
 
-create policy select_COMMENT ON m_pub.comment for select to app_user, app_visitor
+create policy select_COMMENT ON m_pub.comment for select to middleman_user, middleman_visitor
   using (true);
 
-create policy insert_COMMENT ON m_pub.comment for insert to app_user
+create policy insert_COMMENT ON m_pub.comment for insert to middleman_user
   with check (person_id = current_setting('jwt.claims.person_id')::integer);
 
-create policy update_COMMENT ON m_pub.comment for update to app_user
+create policy update_COMMENT ON m_pub.comment for update to middleman_user
   using (person_id = current_setting('jwt.claims.person_id')::integer);
 
-create policy delete_COMMENT ON m_pub.comment for delete to app_user
+create policy delete_COMMENT ON m_pub.comment for delete to middleman_user
   using (person_id = current_setting('jwt.claims.person_id')::integer);

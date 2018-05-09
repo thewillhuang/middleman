@@ -23,7 +23,7 @@
     "db:create": "createdb middleman",
     "db:drop": "dropdb middleman",
     "db:up": "db-migrate up",
-    "db:r": "yarn db:drop && yarn db:create && yarn db:down && yarn db:up",
+    "db:r": "yarn db:down && yarn db:drop && yarn db:create && yarn db:up",
     "db:down": "db-migrate down"
   },
   "devDependencies": {

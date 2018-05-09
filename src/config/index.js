@@ -26,7 +26,7 @@ export const POSTGRAPHQLCONFIG = {
   extendedErrors: ['hint', 'detail', 'errcode'],
   jwtSecret: JWT_SECRET,
   jwtPgTypeIdentifier: 'm_pub.jwt_token',
-  pgDefaultRole: 'person_anonymous',
+  pgDefaultRole: 'middleman_visitor',
   legacyRelations: 'omit',
   jwtVerifyOptions: {
     algorithms: ['HS256'],
@@ -53,7 +53,7 @@ if (!isDevelopment) {
     rejectUnauthorized: true,
     ca,
   };
-  // POSTGRAPHQLCONFIG.readCache = cachePath;
+  POSTGRAPHQLCONFIG.readCache = cachePath;
 }
 
 export const pool = new Pool(PGCONFIG);
