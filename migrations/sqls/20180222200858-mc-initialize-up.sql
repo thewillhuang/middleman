@@ -205,7 +205,7 @@ CREATE TRIGGER job_tag_updated_at BEFORE UPDATE
 CREATE INDEX ON m_pub.job_tag (job_id);
 
 create table m_priv.person_account (
-  person_id        BIGINT PRIMARY KEY REFERENCES m_pub.person(id) ON UPDATE cascade,
+  person_id        BIGINT PRIMARY KEY REFERENCES m_pub.person(id) ON UPDATE CASCADE,
   email            TEXT NOT NULL UNIQUE CHECK (email ~* '^.+@.+\..+$'),
   password_hash    TEXT NOT NULL
 );
