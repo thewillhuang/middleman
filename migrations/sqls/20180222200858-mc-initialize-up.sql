@@ -1,4 +1,4 @@
-
+-- CREATE EXTENSION IF NOT EXISTS postgis;
 create schema m_priv;
 create schema m_pub;
 
@@ -10,21 +10,6 @@ begin
   return new;
 end;
 $$ language plpgsql;
-
-CREATE TABLE m_pub.coordinate (
-  id BIGSERIAL PRIMARY KEY,
-  geohash TEXT NOT NULL UNIQUE,
-  address TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TRIGGER coordinate_updated_at BEFORE UPDATE
-  ON m_pub.coordinate
-  FOR EACH ROW
-  EXECUTE PROCEDURE m_pub.set_updated_at();
-
-COMMENT ON TABLE m_pub.coordinate IS E'@omit all';
 
 CREATE TABLE m_pub.phone (
   id BIGSERIAL PRIMARY KEY,
@@ -50,7 +35,7 @@ CREATE TABLE m_pub.person (
   first_name TEXT,
   last_name TEXT,
   phone_id BIGINT REFERENCES m_pub.phone(id) ON UPDATE CASCADE,
-  coordinate_id BIGINT REFERENCES m_pub.coordinate(id) ON UPDATE CASCADE,
+  geohash TEXT NOT NULL,
   is_client BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -179,7 +164,7 @@ CREATE TYPE m_pub.job_status AS ENUM (
 CREATE TABLE m_pub.job (
   id BIGSERIAL PRIMARY KEY,
   person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
-  coordinate_id BIGINT REFERENCES m_pub.coordinate(id) ON UPDATE CASCADE,
+  geohash TEXT NOT NULL,
   status m_pub.job_status,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -215,7 +200,7 @@ COMMENT ON COLUMN m_priv.person_account.person_id is 'The id of the person assoc
 COMMENT ON COLUMN m_priv.person_account.email is 'The email address of the person.';
 COMMENT ON COLUMN m_priv.person_account.password_hash is 'An opaque hash of the person’s password.';
 
-create extension if not exists pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE FUNCTION m_pub.register_person(
   first_name text,
@@ -294,7 +279,6 @@ CREATE POLICY delete_person on m_pub.person for delete TO person
   USING (id = current_setting('jwt.claims.person_id')::INTEGER);
 
 GRANT USAGE ON SEQUENCE m_pub.comment_id_seq TO middleman_user;
-GRANT USAGE ON SEQUENCE m_pub.coordinate_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE m_pub.person_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE m_pub.phone_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE m_pub.photo_id_seq TO middleman_user;
@@ -302,7 +286,6 @@ GRANT USAGE ON SEQUENCE m_pub.tag_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE m_pub.url_id_seq TO middleman_user;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment TO sys_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.coordinate TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.phone TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.photo TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.tag TO sys_admin;
@@ -311,7 +294,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment_tree TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.person_comment TO sys_admin;
 
 GRANT SELECT ON TABLE m_pub.comment TO middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE m_pub.coordinate TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.phone TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.photo TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.tag TO middleman_user, middleman_visitor;
@@ -321,7 +303,6 @@ GRANT SELECT ON TABLE m_pub.person_comment TO middleman_user, middleman_visitor;
 
 
 GRANT INSERT, UPDATE ON TABLE m_pub.comment TO middleman_user;
-GRANT INSERT, UPDATE ON TABLE m_pub.coordinate TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.phone TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.photo TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.tag TO middleman_user;
