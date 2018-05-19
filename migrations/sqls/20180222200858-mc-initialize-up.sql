@@ -1,7 +1,7 @@
 -- CREATE EXTENSION IF NOT EXISTS postgis;
-create schema m_priv;
-create schema m_pub;
-
+CREATE schema m_priv;
+CREATE schema m_pub;
+CREATE EXTENSION IF NOT EXISTS postgis;
 alter DEFAULT privileges revoke EXECUTE ON FUNCTIONs from public;
 
 CREATE FUNCTION m_pub.set_updated_at() returns trigger AS $$
@@ -189,7 +189,7 @@ CREATE TRIGGER job_tag_updated_at BEFORE UPDATE
 
 CREATE INDEX ON m_pub.job_tag (job_id);
 
-create table m_priv.person_account (
+CREATE table m_priv.person_account (
   person_id        BIGINT PRIMARY KEY REFERENCES m_pub.person(id) ON UPDATE CASCADE,
   email            TEXT NOT NULL UNIQUE CHECK (email ~* '^.+@.+\..+$'),
   password_hash    TEXT NOT NULL
