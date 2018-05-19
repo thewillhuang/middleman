@@ -273,9 +273,9 @@ GRANT UPDATE, DELETE ON TABLE m_pub.person TO middleman_user;
 alter table m_pub.person enable row level security;
 CREATE POLICY select_person on m_pub.person for SELECT TO middleman_user, middleman_visitor
   USING (true);
-CREATE POLICY update_person on m_pub.person for UPDATE TO person
+CREATE POLICY update_person on m_pub.person for UPDATE TO middleman_user
   USING (id = current_setting('jwt.claims.person_id')::INTEGER);
-CREATE POLICY delete_person on m_pub.person for delete TO person
+CREATE POLICY delete_person on m_pub.person for delete TO middleman_user
   USING (id = current_setting('jwt.claims.person_id')::INTEGER);
 
 GRANT USAGE ON SEQUENCE m_pub.comment_id_seq TO middleman_user;
