@@ -44,11 +44,13 @@ CREATE TABLE m_pub.person (
   first_name TEXT,
   last_name TEXT,
   phone_id BIGINT REFERENCES m_pub.phone(id) ON UPDATE CASCADE,
-  geohash TEXT NOT NULL,
+  geograph_id BIGINT REFERENCES m_pub.geograph(id) on UPDATE CASCADE,
   is_client BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE INDEX ON m_pub.person (geograph_id);
 
 CREATE TRIGGER person_updated_at BEFORE UPDATE
   ON m_pub.person
@@ -177,6 +179,7 @@ CREATE TRIGGER person_geograph_updated_at BEFORE UPDATE
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
 CREATE INDEX ON m_pub.person_geograph (person_id);
+CREATE INDEX ON m_pub.person_geograph (geograph_id);
 
 COMMENT ON TABLE m_pub.person_geograph IS E'@omit all';
 
@@ -189,11 +192,13 @@ CREATE TYPE m_pub.job_status AS ENUM (
 CREATE TABLE m_pub.job (
   id BIGSERIAL PRIMARY KEY,
   person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
-  geohash TEXT NOT NULL,
+  geograph_id BIGINT REFERENCES m_pub.geograph(id) on UPDATE CASCADE,
   status m_pub.job_status,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE INDEX ON m_pub.job (geograph_id);
 
 CREATE TRIGGER job_updated_at BEFORE UPDATE
   ON m_pub.job
