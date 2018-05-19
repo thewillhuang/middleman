@@ -32,7 +32,7 @@ ALTER TABLE m_pub.phone ADD CONSTRAINT phone_number UNIQUE (country_code, area_c
 
 CREATE TABLE m_pub.geograph (
   id BIGSERIAL PRIMARY KEY,
-  geog geography
+  geog geography NOT NULL
 );
 
 CREATE INDEX ON m_pub.geograph USING GIST (geog);
