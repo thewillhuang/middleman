@@ -2,9 +2,9 @@
 CREATE schema m_priv;
 CREATE schema m_pub;
 CREATE EXTENSION IF NOT EXISTS postgis;
-alter DEFAULT privileges revoke EXECUTE ON FUNCTIONs from public;
+ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM public;
 
-CREATE FUNCTION m_pub.set_updated_at() returns trigger AS $$
+CREATE FUNCTION m_pub.set_updated_at() RETURNS TRIGGER AS $$
 begin
   new.updated_at := current_timestamp;
   return new;
@@ -29,6 +29,15 @@ CREATE TRIGGER phone_updated_at BEFORE UPDATE
 COMMENT ON TABLE m_pub.phone IS E'@omit all';
 
 ALTER TABLE m_pub.phone ADD CONSTRAINT phone_number UNIQUE (country_code, area_code, phone, ext);
+
+CREATE TABLE m_pub.geograph (
+  id BIGSERIAL PRIMARY KEY,
+  geog geography
+);
+
+CREATE INDEX ON m_pub.geograph USING GIST (geog);
+
+COMMENT ON TABLE m_pub.geograph IS E'@omit all';
 
 CREATE TABLE m_pub.person (
   id BIGSERIAL PRIMARY KEY,
@@ -155,6 +164,22 @@ CREATE INDEX ON m_pub.person_tag (person_id);
 
 COMMENT ON TABLE m_pub.person_tag IS E'@omit all';
 
+CREATE TABLE m_pub.person_geograph (
+  person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
+  geograph_id BIGINT REFERENCES m_pub.geograph(id) ON UPDATE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TRIGGER person_geograph_updated_at BEFORE UPDATE
+  ON m_pub.person
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
+
+CREATE INDEX ON m_pub.person_geograph (person_id);
+
+COMMENT ON TABLE m_pub.person_geograph IS E'@omit all';
+
 CREATE TYPE m_pub.job_status AS ENUM (
   'filled',
   'completed',
@@ -189,7 +214,7 @@ CREATE TRIGGER job_tag_updated_at BEFORE UPDATE
 
 CREATE INDEX ON m_pub.job_tag (job_id);
 
-CREATE table m_priv.person_account (
+CREATE TABLE m_priv.person_account (
   person_id        BIGINT PRIMARY KEY REFERENCES m_pub.person(id) ON UPDATE CASCADE,
   email            TEXT NOT NULL UNIQUE CHECK (email ~* '^.+@.+\..+$'),
   password_hash    TEXT NOT NULL
@@ -207,7 +232,7 @@ CREATE FUNCTION m_pub.register_person(
   last_name text,
   email text,
   password text
-) returns m_pub.person AS $$
+) RETURNS m_pub.person AS $$
 declare
   person m_pub.person;
 begin
@@ -238,7 +263,7 @@ CREATE TYPE m_pub.jwt_token AS (
 CREATE FUNCTION m_pub.authenticate(
   email text,
   password text
-) returns m_pub.jwt_token AS $$
+) RETURNS m_pub.jwt_token AS $$
 declare
   account m_priv.person_account;
 begin
@@ -256,7 +281,7 @@ $$ language plpgsql strict security definer;
 
 COMMENT ON FUNCTION m_pub.authenticate(TEXT, TEXT) is 'Creates a JWT token that will securely identify a person and give them certain permissions.';
 
-CREATE FUNCTION m_pub.current_person() returns m_pub.person AS $$
+CREATE FUNCTION m_pub.current_person() RETURNS m_pub.person AS $$
   SELECT *
   from m_pub.person
   where id = current_setting('jwt.claims.person_id')::BIGINT
@@ -270,7 +295,7 @@ GRANT EXECUTE ON FUNCTION m_pub.register_person(TEXT, TEXT, TEXT, TEXT) TO middl
 GRANT usage on schema m_pub TO middleman_visitor, middleman_user, sys_admin;
 GRANT SELECT ON TABLE m_pub.person TO middleman_visitor, middleman_user;
 GRANT UPDATE, DELETE ON TABLE m_pub.person TO middleman_user;
-alter table m_pub.person enable row level security;
+ALTER TABLE m_pub.person enable row level security;
 CREATE POLICY select_person on m_pub.person for SELECT TO middleman_user, middleman_visitor
   USING (true);
 CREATE POLICY update_person on m_pub.person for UPDATE TO middleman_user
@@ -310,7 +335,7 @@ GRANT INSERT, UPDATE ON TABLE m_pub.url TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.comment_tree TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.person_comment TO middleman_user;
 
-alter table m_pub.comment enable row level security;
+ALTER TABLE m_pub.comment enable row level security;
 
 CREATE POLICY select_COMMENT ON m_pub.comment for SELECT TO middleman_user, middleman_visitor
   USING (true);
