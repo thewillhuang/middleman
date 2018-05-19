@@ -193,12 +193,13 @@ CREATE TABLE m_pub.job (
   id BIGSERIAL PRIMARY KEY,
   person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
   geograph_id BIGINT REFERENCES m_pub.geograph(id) on UPDATE CASCADE,
-  status m_pub.job_status,
+  mode m_pub.job_status,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX ON m_pub.job (geograph_id);
+CREATE INDEX ON m_pub.job (mode);
 
 CREATE TRIGGER job_updated_at BEFORE UPDATE
   ON m_pub.job
@@ -292,8 +293,24 @@ CREATE FUNCTION m_pub.current_person() RETURNS m_pub.person AS $$
   where id = current_setting('jwt.claims.person_id')::BIGINT
 $$ language sql stable;
 
-COMMENT ON FUNCTION m_pub.current_person() is 'Gets the person who wAS identified by our JWT.';
+COMMENT ON FUNCTION m_pub.current_person() is 'Gets the person who was identified by our JWT.';
 
+CREATE FUNCTION m_pub.open_jobs(
+  lat REAL,
+  long REAL
+) RETURNS m_pub.job as $$
+  SELECT m_pub.job.*
+  FROM m_pub.job
+  INNER JOIN m_pub.geograph
+  ON m_pub.geograph.id = m_pub.job.geograph_id
+  AND m_pub.job.mode = 'open'
+  ORDER BY m_pub.geograph.geog <-> concat('SRID=26918;POINT(', long, ' ', lat, ')')::geometry
+  LIMIT 50;
+$$ language sql stable;
+
+COMMENT ON FUNCTION m_pub.open_jobs(REAL, REAL) is 'Gets the 50 nearest open jobs via knn with use of index';
+
+GRANT EXECUTE ON FUNCTION m_pub.open_jobs(REAL, REAL) TO middleman_user;
 GRANT EXECUTE ON FUNCTION m_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION m_pub.current_person() TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION m_pub.register_person(TEXT, TEXT, TEXT, TEXT) TO middleman_visitor;
