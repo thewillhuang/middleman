@@ -30,27 +30,18 @@ COMMENT ON TABLE m_pub.phone IS E'@omit all';
 
 ALTER TABLE m_pub.phone ADD CONSTRAINT phone_number UNIQUE (country_code, area_code, phone, ext);
 
-CREATE TABLE m_pub.geograph (
-  id BIGSERIAL PRIMARY KEY,
-  geog geography NOT NULL
-);
-
-CREATE INDEX ON m_pub.geograph USING GIST (geog);
-
-COMMENT ON TABLE m_pub.geograph IS E'@omit all';
-
 CREATE TABLE m_pub.person (
   id BIGSERIAL PRIMARY KEY,
   first_name TEXT,
   last_name TEXT,
   phone_id BIGINT REFERENCES m_pub.phone(id) ON UPDATE CASCADE,
-  geograph_id BIGINT REFERENCES m_pub.geograph(id) on UPDATE CASCADE,
+  geog geography NOT NULL
   is_client BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX ON m_pub.person (geograph_id);
+CREATE INDEX ON m_pub.person USING GIST (geog);
 
 CREATE TRIGGER person_updated_at BEFORE UPDATE
   ON m_pub.person
@@ -166,23 +157,6 @@ CREATE INDEX ON m_pub.person_tag (person_id);
 
 COMMENT ON TABLE m_pub.person_tag IS E'@omit all';
 
-CREATE TABLE m_pub.person_geograph (
-  person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
-  geograph_id BIGINT REFERENCES m_pub.geograph(id) ON UPDATE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TRIGGER person_geograph_updated_at BEFORE UPDATE
-  ON m_pub.person
-  FOR EACH ROW
-  EXECUTE PROCEDURE m_pub.set_updated_at();
-
-CREATE INDEX ON m_pub.person_geograph (person_id);
-CREATE INDEX ON m_pub.person_geograph (geograph_id);
-
-COMMENT ON TABLE m_pub.person_geograph IS E'@omit all';
-
 CREATE TYPE m_pub.job_status AS ENUM (
   'filled',
   'completed',
@@ -192,13 +166,13 @@ CREATE TYPE m_pub.job_status AS ENUM (
 CREATE TABLE m_pub.job (
   id BIGSERIAL PRIMARY KEY,
   person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
-  geograph_id BIGINT REFERENCES m_pub.geograph(id) on UPDATE CASCADE,
+  geog geography NOT NULL
   mode m_pub.job_status,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX ON m_pub.job (geograph_id);
+CREATE INDEX ON m_pub.job USING GIST (geog);
 CREATE INDEX ON m_pub.job (mode);
 
 CREATE TRIGGER job_updated_at BEFORE UPDATE
@@ -278,7 +252,7 @@ begin
   where a.email = $1;
 
   if account.password_hash = crypt(password, account.password_hash) then
-    return ('person', account.person_id)::m_pub.jwt_token;
+    return ('middleman_user', account.person_id)::m_pub.jwt_token;
   else
     return null;
   end if;
@@ -299,12 +273,10 @@ CREATE FUNCTION m_pub.open_jobs(
   lat REAL,
   long REAL
 ) RETURNS m_pub.job as $$
-  SELECT m_pub.job.*
+  SELECT *
   FROM m_pub.job
-  INNER JOIN m_pub.geograph
-  ON m_pub.geograph.id = m_pub.job.geograph_id
-  AND m_pub.job.mode = 'open'
-  ORDER BY m_pub.geograph.geog <-> concat('SRID=26918;POINT(', long, ' ', lat, ')')::geometry
+  WHERE m_pub.job.mode = 'open'
+  ORDER BY m_pub.job.geog <-> concat('SRID=26918;POINT(', long, ' ', lat, ')')::geometry
   LIMIT 50;
 $$ language sql stable;
 
@@ -331,6 +303,7 @@ GRANT USAGE ON SEQUENCE m_pub.phone_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE m_pub.photo_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE m_pub.tag_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE m_pub.url_id_seq TO middleman_user;
+GRANT USAGE ON SEQUENCE m_pub.job_id_seq TO middleman_user;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.phone TO sys_admin;
@@ -339,6 +312,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.tag TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.url TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment_tree TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.person_comment TO sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.job TO sys_admin;
 
 GRANT SELECT ON TABLE m_pub.comment TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.phone TO middleman_user, middleman_visitor;
@@ -347,7 +321,7 @@ GRANT SELECT ON TABLE m_pub.tag TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.url TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.comment_tree TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.person_comment TO middleman_user, middleman_visitor;
-
+GRANT SELECT ON TABLE m_pub.job TO middleman_user;
 
 GRANT INSERT, UPDATE ON TABLE m_pub.comment TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.phone TO middleman_user;
@@ -356,6 +330,7 @@ GRANT INSERT, UPDATE ON TABLE m_pub.tag TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.url TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.comment_tree TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.person_comment TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.job TO middleman_user;
 
 ALTER TABLE m_pub.comment enable row level security;
 
