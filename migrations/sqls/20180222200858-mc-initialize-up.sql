@@ -161,7 +161,7 @@ CREATE TYPE m_pub.job_status AS ENUM (
   'filled',
   'closed',
   'finished',
-  'open'
+  'opened'
 );
 
 CREATE TABLE m_pub.job (
@@ -276,7 +276,7 @@ CREATE FUNCTION m_pub.open_jobs(
 ) RETURNS m_pub.job as $$
   SELECT *
   FROM m_pub.job
-  WHERE m_pub.job.mode = 'open'
+  WHERE m_pub.job.mode = 'opened'
   ORDER BY m_pub.job.geog <-> concat('SRID=26918;POINT(', long, ' ', lat, ')')::geometry
   LIMIT 50;
 $$ language sql stable;
