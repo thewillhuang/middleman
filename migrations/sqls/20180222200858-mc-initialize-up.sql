@@ -72,7 +72,7 @@ CREATE TABLE m_pub.comment (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX on m_pub.comment (person_id);
+CREATE INDEX ON m_pub.comment (person_id);
 
 CREATE TRIGGER comment_updated_at BEFORE UPDATE
   ON m_pub.comment
@@ -240,15 +240,15 @@ GRANT EXECUTE ON FUNCTION m_pub.open_jobs(REAL, REAL, m_pub.job_type) TO middlem
 GRANT EXECUTE ON FUNCTION m_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION m_pub.current_person() TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION m_pub.register_person(TEXT, TEXT, TEXT, TEXT) TO middleman_visitor;
-GRANT usage on SCHEMA m_pub TO middleman_visitor, middleman_user, sys_admin;
+GRANT USAGE ON SCHEMA m_pub TO middleman_visitor, middleman_user, sys_admin;
 GRANT SELECT ON TABLE m_pub.person TO middleman_visitor, middleman_user;
 GRANT UPDATE, DELETE ON TABLE m_pub.person TO middleman_user;
 ALTER TABLE m_pub.person ENABLE ROW LEVEL SECURITY;
-CREATE POLICY select_person on m_pub.person FOR SELECT TO middleman_user, middleman_visitor
+CREATE POLICY select_person ON m_pub.person FOR SELECT TO middleman_user, middleman_visitor
   USING (true);
-CREATE POLICY update_person on m_pub.person FOR UPDATE TO middleman_user
+CREATE POLICY update_person ON m_pub.person FOR UPDATE TO middleman_user
   USING (id = current_setting('jwt.claims.person_id')::INTEGER);
-CREATE POLICY delete_person on m_pub.person FOR delete TO middleman_user
+CREATE POLICY delete_person ON m_pub.person FOR delete TO middleman_user
   USING (id = current_setting('jwt.claims.person_id')::INTEGER);
 
 GRANT USAGE ON SEQUENCE m_pub.comment_id_seq TO middleman_user;
