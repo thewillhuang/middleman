@@ -1,5 +1,6 @@
 CREATE SCHEMA m_priv;
 CREATE SCHEMA m_pub;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS postgis;
 ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM public;
 
@@ -156,8 +157,6 @@ COMMENT ON TABLE m_priv.person_account IS 'Private information about a person’
 COMMENT ON COLUMN m_priv.person_account.person_id IS 'The id of the person associated with this account.';
 COMMENT ON COLUMN m_priv.person_account.email IS 'The email address of the person.';
 COMMENT ON COLUMN m_priv.person_account.password_hash IS 'An opaque hash of the person’s password.';
-
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE FUNCTION m_pub.register_person(
   first_name TEXT,
