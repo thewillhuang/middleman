@@ -157,7 +157,7 @@ CREATE INDEX ON m_pub.person_tag (person_id);
 
 COMMENT ON TABLE m_pub.person_tag IS E'@omit all';
 
-CREATE TYPE m_pub.job_status AS ENUM (
+CREATE TYPE m_pub.mode AS ENUM (
   'filled',
   'closed',
   'finished',
@@ -168,7 +168,7 @@ CREATE TABLE m_pub.job (
   id BIGSERIAL PRIMARY KEY,
   person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
   geog geography NOT NULL,
-  mode m_pub.job_status,
+  mode m_pub.mode,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
