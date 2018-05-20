@@ -33,7 +33,7 @@ CREATE TABLE m_pub.person (
   id BIGSERIAL PRIMARY KEY,
   first_name TEXT,
   last_name TEXT,
-  phone_id BIGINT REFERENCES m_pub.phone(id) ON UPDATE CASCADE,
+  phone_id BIGINT REFERENCES m_pub.phone ON UPDATE CASCADE,
   geog geography,
   is_client BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -67,7 +67,7 @@ COMMENT ON TABLE m_pub.photo IS E'@omit all';
 CREATE TABLE m_pub.comment (
   id BIGSERIAL PRIMARY KEY,
   commentary TEXT,
-  person_id BIGINT NOT NULL REFERENCES m_pub.person(id) ON UPDATE CASCADE,
+  person_id BIGINT NOT NULL REFERENCES m_pub.person ON UPDATE CASCADE,
   stars SMALLINT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -83,8 +83,8 @@ CREATE TRIGGER comment_updated_at BEFORE UPDATE
 COMMENT ON TABLE m_pub.comment IS E'@omit all';
 
 CREATE TABLE m_pub.comment_tree (
-  parent_id BIGINT NOT NULL REFERENCES m_pub.comment(id) ON UPDATE CASCADE,
-  child_id BIGINT NOT NULL REFERENCES m_pub.comment(id) ON UPDATE CASCADE,
+  parent_id BIGINT NOT NULL REFERENCES m_pub.comment ON UPDATE CASCADE,
+  child_id BIGINT NOT NULL REFERENCES m_pub.comment ON UPDATE CASCADE,
   depth SMALLINT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -116,10 +116,10 @@ CREATE TYPE m_pub.job_type AS ENUM (
 
 CREATE TABLE m_pub.job (
   id BIGSERIAL PRIMARY KEY,
-  person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
+  person_id BIGINT REFERENCES m_pub.person ON UPDATE CASCADE,
   geog geography NOT NULL,
-  category m_pub.job_type,
-  mode m_pub.job_mode,
+  category m_pub.job_type NOT NULL,
+  mode m_pub.job_mode NOT NULL DEFAULT 'opened',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -134,8 +134,8 @@ CREATE TRIGGER job_updated_at BEFORE UPDATE
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
 CREATE TABLE m_pub.person_comment (
-  person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
-  comment_id BIGINT REFERENCES m_pub.comment(id) ON UPDATE CASCADE,
+  person_id BIGINT REFERENCES m_pub.person ON UPDATE CASCADE,
+  comment_id BIGINT REFERENCES m_pub.comment ON UPDATE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -150,8 +150,8 @@ CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
 COMMENT ON TABLE m_pub.person_comment IS E'@omit all';
 
 CREATE TABLE m_pub.person_photo (
-  person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
-  photo_id BIGINT REFERENCES m_pub.photo(id) ON UPDATE CASCADE,
+  person_id BIGINT REFERENCES m_pub.person ON UPDATE CASCADE,
+  photo_id BIGINT REFERENCES m_pub.photo ON UPDATE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -166,8 +166,8 @@ CREATE TRIGGER person_photo_updated_at BEFORE UPDATE
 COMMENT ON TABLE m_pub.person_photo IS E'@omit all';
 
 CREATE TABLE m_pub.job_photo (
-  job_id BIGINT REFERENCES m_pub.job(id) ON UPDATE CASCADE,
-  photo_id BIGINT REFERENCES m_pub.photo(id) ON UPDATE CASCADE,
+  job_id BIGINT REFERENCES m_pub.job ON UPDATE CASCADE,
+  photo_id BIGINT REFERENCES m_pub.photo ON UPDATE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -182,7 +182,7 @@ CREATE TRIGGER job_photo_updated_at BEFORE UPDATE
 COMMENT ON TABLE m_pub.job_photo IS E'@omit all';
 
 CREATE TABLE m_priv.person_account (
-  person_id        BIGINT PRIMARY KEY REFERENCES m_pub.person(id) ON UPDATE CASCADE,
+  person_id        BIGINT PRIMARY KEY REFERENCES m_pub.person ON UPDATE CASCADE,
   email            TEXT NOT NULL UNIQUE CHECK (email ~* '^.+@.+\..+$'),
   password_hash    TEXT NOT NULL
 );
