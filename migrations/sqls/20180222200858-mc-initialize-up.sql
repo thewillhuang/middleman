@@ -159,7 +159,8 @@ COMMENT ON TABLE m_pub.person_tag IS E'@omit all';
 
 CREATE TYPE m_pub.job_status AS ENUM (
   'filled',
-  'completed',
+  'closed',
+  'finished',
   'open'
 );
 
