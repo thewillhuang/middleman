@@ -50,37 +50,9 @@ CREATE TRIGGER person_updated_at BEFORE UPDATE
 
 COMMENT ON TABLE m_pub.person IS E'@omit all';
 
-CREATE TABLE m_pub.tag (
-  id BIGSERIAL PRIMARY KEY,
-  tag TEXT NOT NULL UNIQUE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TRIGGER tag_updated_at BEFORE UPDATE
-  ON m_pub.tag
-  FOR EACH ROW
-  EXECUTE PROCEDURE m_pub.set_updated_at();
-
-COMMENT ON TABLE m_pub.tag IS E'@omit all';
-
-CREATE TABLE m_pub.url (
-  id BIGSERIAL PRIMARY KEY,
-  url TEXT NOT NULL UNIQUE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TRIGGER url_updated_at BEFORE UPDATE
-  ON m_pub.url
-  FOR EACH ROW
-  EXECUTE PROCEDURE m_pub.set_updated_at();
-
-COMMENT ON TABLE m_pub.url IS E'@omit all';
-
 CREATE TABLE m_pub.photo (
   id BIGSERIAL PRIMARY KEY,
-  url_id BIGINT NOT NULL REFERENCES m_pub.url(id) ON UPDATE CASCADE,
+  url TEXT NOT NULL UNIQUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -141,59 +113,39 @@ CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
 
 COMMENT ON TABLE m_pub.person_comment IS E'@omit all';
 
-CREATE TABLE m_pub.person_tag (
-  person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
-  tag_id BIGINT REFERENCES m_pub.tag(id) ON UPDATE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TRIGGER person_tag_updated_at BEFORE UPDATE
-  ON m_pub.person
-  FOR EACH ROW
-  EXECUTE PROCEDURE m_pub.set_updated_at();
-
-CREATE INDEX ON m_pub.person_tag (person_id);
-
-COMMENT ON TABLE m_pub.person_tag IS E'@omit all';
-
-CREATE TYPE m_pub.mode AS ENUM (
+CREATE TYPE m_pub.job_mode AS ENUM (
   'filled',
   'closed',
   'finished',
   'opened'
 );
 
+CREATE TYPE m_pub.job_type AS ENUM (
+  'car wash',
+  'house cleaning',
+  'elder assistance',
+  'cooking',
+  'shopping'
+);
+
 CREATE TABLE m_pub.job (
   id BIGSERIAL PRIMARY KEY,
   person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
   geog geography NOT NULL,
-  mode m_pub.mode,
+  category m_pub.job_type,
+  mode m_pub.job_mode,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX ON m_pub.job USING GIST (geog);
 CREATE INDEX ON m_pub.job (mode);
+CREATE INDEX ON m_pub.job (category);
 
 CREATE TRIGGER job_updated_at BEFORE UPDATE
   ON m_pub.job
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
-
-CREATE TABLE m_pub.job_tag (
-  job_id BIGINT REFERENCES m_pub.job(id) ON UPDATE CASCADE,
-  tag_id BIGINT REFERENCES m_pub.tag(id) ON UPDATE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TRIGGER job_tag_updated_at BEFORE UPDATE
-  ON m_pub.job
-  FOR EACH ROW
-  EXECUTE PROCEDURE m_pub.set_updated_at();
-
-CREATE INDEX ON m_pub.job_tag (job_id);
 
 CREATE TABLE m_priv.person_account (
   person_id        BIGINT PRIMARY KEY REFERENCES m_pub.person(id) ON UPDATE CASCADE,
@@ -272,18 +224,20 @@ COMMENT ON FUNCTION m_pub.current_person() is 'Gets the person who was identifie
 
 CREATE FUNCTION m_pub.open_jobs(
   lat REAL,
-  long REAL
+  long REAL,
+  job_type m_pub.job_type
 ) RETURNS m_pub.job as $$
   SELECT *
   FROM m_pub.job
   WHERE m_pub.job.mode = 'opened'
+  AND m_pub.job.category = job_type
   ORDER BY m_pub.job.geog <-> concat('SRID=26918;POINT(', long, ' ', lat, ')')::geometry
   LIMIT 50;
 $$ language sql stable;
 
-COMMENT ON FUNCTION m_pub.open_jobs(REAL, REAL) is 'Gets the 50 nearest open jobs via knn with use of index';
+COMMENT ON FUNCTION m_pub.open_jobs(REAL, REAL, m_pub.job_type) is 'Gets the 50 nearest open jobs given long lat and job type';
 
-GRANT EXECUTE ON FUNCTION m_pub.open_jobs(REAL, REAL) TO middleman_user;
+GRANT EXECUTE ON FUNCTION m_pub.open_jobs(REAL, REAL, m_pub.job_type) TO middleman_user;
 GRANT EXECUTE ON FUNCTION m_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION m_pub.current_person() TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION m_pub.register_person(TEXT, TEXT, TEXT, TEXT) TO middleman_visitor;
@@ -302,15 +256,11 @@ GRANT USAGE ON SEQUENCE m_pub.comment_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE m_pub.person_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE m_pub.phone_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE m_pub.photo_id_seq TO middleman_user;
-GRANT USAGE ON SEQUENCE m_pub.tag_id_seq TO middleman_user;
-GRANT USAGE ON SEQUENCE m_pub.url_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE m_pub.job_id_seq TO middleman_user;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.phone TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.photo TO sys_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.tag TO sys_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.url TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment_tree TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.person_comment TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.job TO sys_admin;
@@ -318,8 +268,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.job TO sys_admin;
 GRANT SELECT ON TABLE m_pub.comment TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.phone TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.photo TO middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE m_pub.tag TO middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE m_pub.url TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.comment_tree TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.person_comment TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.job TO middleman_user;
@@ -327,8 +275,6 @@ GRANT SELECT ON TABLE m_pub.job TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.comment TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.phone TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.photo TO middleman_user;
-GRANT INSERT, UPDATE ON TABLE m_pub.tag TO middleman_user;
-GRANT INSERT, UPDATE ON TABLE m_pub.url TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.comment_tree TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.person_comment TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.job TO middleman_user;
