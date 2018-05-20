@@ -13,10 +13,10 @@ $$ language plpgsql;
 
 CREATE TABLE m_pub.phone (
   id BIGSERIAL PRIMARY KEY,
-  country_code SMALLINT NOT NULL,
-  area_code SMALLINT NOT NULL,
-  phone integer NOT NULL,
-  ext integer,
+  country_code TEXT NOT NULL,
+  area_code TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  ext TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
