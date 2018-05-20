@@ -68,7 +68,7 @@ CREATE TABLE m_pub.comment (
   id BIGSERIAL PRIMARY KEY,
   commentary TEXT,
   person_id BIGINT NOT NULL REFERENCES m_pub.person(id) ON UPDATE CASCADE,
-  stars SMALLINT NOT NULL,
+  stars SMALLINT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -98,20 +98,6 @@ CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
 COMMENT ON TABLE m_pub.comment_tree IS E'@omit all';
 
 ALTER TABLE m_pub.comment_tree ADD CONSTRAINT comment_tree_pkey PRIMARY KEY (parent_id, child_id);
-
-CREATE TABLE m_pub.person_comment (
-  person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
-  comment_id BIGINT REFERENCES m_pub.comment(id) ON UPDATE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
-  ON m_pub.person
-  FOR EACH ROW
-  EXECUTE PROCEDURE m_pub.set_updated_at();
-
-COMMENT ON TABLE m_pub.person_comment IS E'@omit all';
 
 CREATE TYPE m_pub.job_mode AS ENUM (
   'filled',
@@ -146,6 +132,54 @@ CREATE TRIGGER job_updated_at BEFORE UPDATE
   ON m_pub.job
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
+
+CREATE TABLE m_pub.person_comment (
+  person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
+  comment_id BIGINT REFERENCES m_pub.comment(id) ON UPDATE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX ON m_pub.person_comment (person_id);
+
+CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
+  ON m_pub.person_comment
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
+
+COMMENT ON TABLE m_pub.person_comment IS E'@omit all';
+
+CREATE TABLE m_pub.person_photo (
+  person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
+  photo_id BIGINT REFERENCES m_pub.photo(id) ON UPDATE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX ON m_pub.person_photo (person_id);
+
+CREATE TRIGGER person_photo_updated_at BEFORE UPDATE
+  ON m_pub.person_photo
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
+
+COMMENT ON TABLE m_pub.person_photo IS E'@omit all';
+
+CREATE TABLE m_pub.job_photo (
+  job_id BIGINT REFERENCES m_pub.job(id) ON UPDATE CASCADE,
+  photo_id BIGINT REFERENCES m_pub.photo(id) ON UPDATE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX ON m_pub.job_photo (job_id);
+
+CREATE TRIGGER job_photo_updated_at BEFORE UPDATE
+  ON m_pub.job_photo
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
+
+COMMENT ON TABLE m_pub.job_photo IS E'@omit all';
 
 CREATE TABLE m_priv.person_account (
   person_id        BIGINT PRIMARY KEY REFERENCES m_pub.person(id) ON UPDATE CASCADE,
@@ -259,23 +293,29 @@ GRANT USAGE ON SEQUENCE m_pub.job_id_seq TO middleman_user;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.phone TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.photo TO sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.job TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment_tree TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.person_comment TO sys_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.job TO sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.person_photo TO sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.job_photo TO sys_admin;
 
 GRANT SELECT ON TABLE m_pub.comment TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.phone TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.photo TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.comment_tree TO middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE m_pub.person_comment TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.job TO middleman_user;
+GRANT SELECT ON TABLE m_pub.person_comment TO middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE m_pub.person_photo TO middleman_user;
+GRANT SELECT ON TABLE m_pub.job_photo TO middleman_user;
 
 GRANT INSERT, UPDATE ON TABLE m_pub.comment TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.phone TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.photo TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.comment_tree TO middleman_user;
-GRANT INSERT, UPDATE ON TABLE m_pub.person_comment TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.job TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.person_comment TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.person_photo TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.job_photo TO middleman_user;
 
 ALTER TABLE m_pub.comment ENABLE ROW LEVEL SECURITY;
 
