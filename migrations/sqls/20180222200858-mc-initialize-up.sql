@@ -35,7 +35,7 @@ CREATE TABLE m_pub.person (
   first_name TEXT,
   last_name TEXT,
   phone_id BIGINT REFERENCES m_pub.phone(id) ON UPDATE CASCADE,
-  geog geography NOT NULL
+  geog geography,
   is_client BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -166,7 +166,7 @@ CREATE TYPE m_pub.job_status AS ENUM (
 CREATE TABLE m_pub.job (
   id BIGSERIAL PRIMARY KEY,
   person_id BIGINT REFERENCES m_pub.person(id) ON UPDATE CASCADE,
-  geog geography NOT NULL
+  geog geography NOT NULL,
   mode m_pub.job_status,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
