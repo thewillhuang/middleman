@@ -14,7 +14,6 @@ $$ language plpgsql;
 CREATE TABLE m_pub.phone (
   id BIGSERIAL PRIMARY KEY,
   country_code TEXT NOT NULL,
-  area_code TEXT NOT NULL,
   phone TEXT NOT NULL,
   ext TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -28,7 +27,7 @@ CREATE TRIGGER phone_updated_at BEFORE UPDATE
 
 COMMENT ON TABLE m_pub.phone IS E'@omit all';
 
-ALTER TABLE m_pub.phone ADD CONSTRAINT phone_number UNIQUE (country_code, area_code, phone, ext);
+ALTER TABLE m_pub.phone ADD CONSTRAINT phone_number UNIQUE (country_code, phone, ext);
 
 CREATE TABLE m_pub.person (
   id BIGSERIAL PRIMARY KEY,
@@ -42,6 +41,7 @@ CREATE TABLE m_pub.person (
 );
 
 CREATE INDEX ON m_pub.person USING GIST (geog);
+CREATE INDEX ON m_pub.person (is_client) WHERE is_client = FALSE;
 
 CREATE TRIGGER person_updated_at BEFORE UPDATE
   ON m_pub.person
