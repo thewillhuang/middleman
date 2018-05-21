@@ -24,7 +24,8 @@ CREATE TRIGGER phone_updated_at BEFORE UPDATE
   ON middleman_pub.phone
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
-COMMENT ON TABLE middleman_pub.phone IS E'@omit all';
+COMMENT ON TABLE middleman_pub.phone IS
+  E'@omit all';
 
 ALTER TABLE middleman_pub.phone ADD CONSTRAINT phone_number UNIQUE (country_code, phone, ext);
 
@@ -46,7 +47,8 @@ CREATE TRIGGER person_updated_at BEFORE UPDATE
   ON middleman_pub.person
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
-COMMENT ON TABLE middleman_pub.person IS E'@omit all';
+COMMENT ON TABLE middleman_pub.person IS
+  E'@omit all';
 
 CREATE TABLE middleman_pub.photo (
   id BIGSERIAL PRIMARY KEY,
@@ -59,7 +61,8 @@ CREATE TRIGGER photo_updated_at BEFORE UPDATE
   ON middleman_pub.photo
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
-COMMENT ON TABLE middleman_pub.photo IS E'@omit all';
+COMMENT ON TABLE middleman_pub.photo IS
+  E'@omit all';
 
 CREATE TABLE middleman_pub.comment (
   id BIGSERIAL PRIMARY KEY,
@@ -76,7 +79,8 @@ CREATE TRIGGER comment_updated_at BEFORE UPDATE
   ON middleman_pub.comment
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
-COMMENT ON TABLE middleman_pub.comment IS E'@omit all';
+COMMENT ON TABLE middleman_pub.comment IS
+  E'@omit all';
 
 CREATE TABLE middleman_pub.comment_tree (
   parent_id BIGINT NOT NULL REFERENCES middleman_pub.comment ON UPDATE CASCADE,
@@ -90,7 +94,8 @@ CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
   ON middleman_pub.comment_tree
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
-COMMENT ON TABLE middleman_pub.comment_tree IS E'@omit all';
+COMMENT ON TABLE middleman_pub.comment_tree IS
+  E'@omit all';
 
 ALTER TABLE middleman_pub.comment_tree ADD CONSTRAINT comment_tree_pkey PRIMARY KEY (parent_id, child_id);
 
@@ -133,7 +138,8 @@ CREATE TRIGGER task_updated_at BEFORE UPDATE
   ON middleman_pub.task
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
-COMMENT ON TABLE middleman_pub.task IS E'@omit all';
+COMMENT ON TABLE middleman_pub.task IS
+  E'@omit all';
 
 CREATE TABLE middleman_pub.person_comment (
   person_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
@@ -148,7 +154,8 @@ CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
   ON middleman_pub.person_comment
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
-COMMENT ON TABLE middleman_pub.person_comment IS E'@omit all';
+COMMENT ON TABLE middleman_pub.person_comment IS
+  E'@omit all';
 
 CREATE TABLE middleman_pub.person_type (
   person_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
@@ -176,7 +183,8 @@ CREATE TRIGGER person_photo_updated_at BEFORE UPDATE
   ON middleman_pub.person_photo
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
-COMMENT ON TABLE middleman_pub.person_photo IS E'@omit all';
+COMMENT ON TABLE middleman_pub.person_photo IS
+  E'@omit all';
 
 CREATE TABLE middleman_pub.task_photo (
   task_id BIGINT REFERENCES middleman_pub.task ON UPDATE CASCADE,
@@ -191,7 +199,8 @@ CREATE TRIGGER task_photo_updated_at BEFORE UPDATE
   ON middleman_pub.task_photo
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
-COMMENT ON TABLE middleman_pub.task_photo IS E'@omit all';
+COMMENT ON TABLE middleman_pub.task_photo IS
+  E'@omit all';
 
 CREATE TABLE middleman_priv.person_account (
   person_id        BIGINT PRIMARY KEY REFERENCES middleman_pub.person ON UPDATE CASCADE,
@@ -205,10 +214,14 @@ CREATE TRIGGER person_account_updated_at BEFORE UPDATE
   ON middleman_priv.person_account
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
-COMMENT ON TABLE middleman_priv.person_account IS 'Private information about a person’s account.';
-COMMENT ON COLUMN middleman_priv.person_account.person_id IS 'The id of the person associated with this account.';
-COMMENT ON COLUMN middleman_priv.person_account.email IS 'The email address of the person.';
-COMMENT ON COLUMN middleman_priv.person_account.password_hash IS 'An opaque hash of the person’s password.';
+COMMENT ON TABLE middleman_priv.person_account IS
+  'Private information about a person’s account.';
+COMMENT ON COLUMN middleman_priv.person_account.person_id IS
+  'The id of the person associated with this account.';
+COMMENT ON COLUMN middleman_priv.person_account.email IS
+  'The email address of the person.';
+COMMENT ON COLUMN middleman_priv.person_account.password_hash IS
+  'An opaque hash of the person’s password.';
 
 CREATE FUNCTION middleman_pub.register_person(
   first_name TEXT,
@@ -230,7 +243,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql strict security definer;
 
-COMMENT ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT) IS 'Registers a single person and creates an account in our forum.';
+COMMENT ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT) IS
+  'Registers a single person and creates an account in our forum.';
 
 CREATE ROLE middleman_admin LOGIN PASSWORD 'voodoo3d';
 CREATE ROLE middleman_visitor;
@@ -262,7 +276,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql strict security definer;
 
-COMMENT ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) IS 'Creates a JWT token that will securely identify a person and give them certain permissions.';
+COMMENT ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) IS
+  'Creates a JWT token that will securely identify a person and give them certain permissions.';
 
 CREATE FUNCTION middleman_pub.current_person() RETURNS middleman_pub.person AS $$
   SELECT *
@@ -270,7 +285,8 @@ CREATE FUNCTION middleman_pub.current_person() RETURNS middleman_pub.person AS $
   WHERE id = current_setting('jwt.claims.person_id')::BIGINT
 $$ LANGUAGE sql stable;
 
-COMMENT ON FUNCTION middleman_pub.current_person() IS 'Gets the person who was identified by our JWT.';
+COMMENT ON FUNCTION middleman_pub.current_person() IS
+  'Gets the person who was identified by our JWT.';
 
 CREATE FUNCTION middleman_pub.tasks(
   lat REAL,
@@ -285,7 +301,8 @@ CREATE FUNCTION middleman_pub.tasks(
   ORDER BY middleman_pub.task.geog <-> concat('SRID=26918;POINT(', long, ' ', lat, ')')::geometry;
 $$ LANGUAGE sql stable;
 
-COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type, middleman_pub.task_mode) IS 'Gets the 50 nearest open tasks given long lat and task type';
+COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type, middleman_pub.task_mode) IS
+  'Gets the 50 nearest open tasks given long lat and task type';
 
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type, middleman_pub.task_mode) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
