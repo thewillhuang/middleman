@@ -3,7 +3,8 @@ import { Pool } from 'pg';
 let cachedPool = null;
 
 export default (PGCONFIG) => {
-  if (!cachedPool) {
+  if (cachedPool === null) {
+    console.log('initializing a new pool');
     cachedPool = new Pool(PGCONFIG);
   }
 

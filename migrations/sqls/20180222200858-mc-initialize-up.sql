@@ -277,13 +277,12 @@ CREATE FUNCTION middleman_pub.tasks(
   long REAL,
   task_type middleman_pub.task_type,
   task_status middleman_pub.task_mode
-) RETURNS middleman_pub.task as $$
+) RETURNS SETOF middleman_pub.task as $$
   SELECT *
   FROM middleman_pub.task
   WHERE middleman_pub.task.mode = task_status
   AND middleman_pub.task.category = task_type
-  ORDER BY middleman_pub.task.geog <-> concat('SRID=26918;POINT(', long, ' ', lat, ')')::geometry
-  LIMIT 50;
+  ORDER BY middleman_pub.task.geog <-> concat('SRID=26918;POINT(', long, ' ', lat, ')')::geometry;
 $$ LANGUAGE sql stable;
 
 COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type, middleman_pub.task_mode) IS 'Gets the 50 nearest open tasks given long lat and task type';
