@@ -8,7 +8,14 @@ import {
   schemas,
   ENV,
   isDevelopment,
+  pool,
 } from './config/index';
+
+// use cachedPool from container before using another pool
+let cachedPool;
+if (!cachedPool) {
+  cachedPool = pool;
+}
 
 const app = express();
 
@@ -18,7 +25,7 @@ if (isDevelopment) {
 app.get('/', (req, res) => {
   res.send('pong');
 });
-app.use(postgraphile(PGCONFIG, schemas, POSTGRAPHQLCONFIG));
+app.use(postgraphile(cachedPool, schemas, POSTGRAPHQLCONFIG));
 app.listen(PORT);
 
 console.log(`nodejs server starting at port: ${PORT} in ${ENV} mode`);
