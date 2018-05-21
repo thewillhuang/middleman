@@ -108,15 +108,17 @@ CREATE TYPE m_pub.job_mode AS ENUM (
 
 CREATE TYPE m_pub.job_type AS ENUM (
   'car wash',
-  'house cleaning',
-  'elder assistance',
-  'cooking',
-  'shopping'
+  'elder house cleaning',
+  'elder cooking',
+  'elder shopping',
+  'medical tourism',
+  'storage'
 );
 
 CREATE TABLE m_pub.job (
   id BIGSERIAL PRIMARY KEY,
-  person_id BIGINT REFERENCES m_pub.person ON UPDATE CASCADE,
+  requestor_id BIGINT REFERENCES m_pub.person ON UPDATE CASCADE,
+  fulfiller_id BIGINT REFERENCES m_pub.person ON UPDATE CASCADE,
   geog geography NOT NULL,
   category m_pub.job_type NOT NULL,
   mode m_pub.job_mode NOT NULL DEFAULT 'opened',
@@ -132,6 +134,8 @@ CREATE TRIGGER job_updated_at BEFORE UPDATE
   ON m_pub.job
   FOR EACH ROW
   EXECUTE PROCEDURE m_pub.set_updated_at();
+
+COMMENT ON TABLE m_pub.job IS E'@omit all';
 
 CREATE TABLE m_pub.person_comment (
   person_id BIGINT REFERENCES m_pub.person ON UPDATE CASCADE,
