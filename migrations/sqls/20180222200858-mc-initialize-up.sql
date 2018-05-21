@@ -109,8 +109,10 @@ CREATE TYPE m_pub.job_mode AS ENUM (
 CREATE TYPE m_pub.job_type AS ENUM (
   'car wash',
   'car detail',
-  'elder house cleaning',
+  'elder bathing',
   'elder cooking',
+  'elder house cleaning',
+  'elder long term',
   'elder shopping',
   'medical tourism',
   'storage'
@@ -154,6 +156,20 @@ CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
   EXECUTE PROCEDURE m_pub.set_updated_at();
 
 COMMENT ON TABLE m_pub.person_comment IS E'@omit all';
+
+CREATE TABLE m_pub.person_type (
+  person_id BIGINT REFERENCES m_pub.person ON UPDATE CASCADE,
+  category m_pub.job_type,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TRIGGER person_type_updated_at BEFORE UPDATE
+  ON m_pub.person_type
+  FOR EACH ROW
+  EXECUTE PROCEDURE m_pub.set_updated_at();
+
+CREATE INDEX ON m_pub.person_type (person_id);
 
 CREATE TABLE m_pub.person_photo (
   person_id BIGINT REFERENCES m_pub.person ON UPDATE CASCADE,
