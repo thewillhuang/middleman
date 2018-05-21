@@ -13,7 +13,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE FUNCTION middleman_pub.set_geog() RETURNS TRIGGER AS $$
 BEGIN
-  NEW.GEOG := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4269);
+  NEW.geog := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4269);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
