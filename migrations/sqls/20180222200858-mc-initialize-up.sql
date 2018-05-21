@@ -6,8 +6,15 @@ ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM public;
 
 CREATE FUNCTION middleman_pub.set_updated_at() RETURNS TRIGGER AS $$
 BEGIN
-  new.updated_at := NOW();
-  RETURN new;
+  NEW.updated_at := NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE FUNCTION middleman_pub.set_geog() RETURNS TRIGGER AS $$
+BEGIN
+  NEW.GEOG := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4269);
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -34,7 +41,9 @@ CREATE TABLE middleman_pub.person (
   first_name TEXT,
   last_name TEXT,
   phone_id BIGINT REFERENCES middleman_pub.phone ON UPDATE CASCADE,
-  geog geography,
+  longitude FLOAT NOT NULL,
+  latitude FLOAT NOT NULL,
+  geog GEOMETRY,
   is_client BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -46,6 +55,10 @@ CREATE INDEX ON middleman_pub.person (is_client) WHERE is_client = FALSE;
 CREATE TRIGGER person_updated_at BEFORE UPDATE
   ON middleman_pub.person
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
+
+CREATE TRIGGER PERSON_set_geog BEFORE INSERT OR UPDATE
+  ON middleman_pub.person
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_geog();
 
 COMMENT ON TABLE middleman_pub.person IS
   E'@omit all';
@@ -112,7 +125,7 @@ CREATE TYPE middleman_pub.task_type AS ENUM (
   'elder bathing',
   'elder cooking',
   'elder house cleaning',
-  'elder long term',
+  'elder longitude term',
   'elder shopping',
   'medical tourism',
   'storage'
@@ -122,7 +135,9 @@ CREATE TABLE middleman_pub.task (
   id BIGSERIAL PRIMARY KEY,
   requestor_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
   fulfiller_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
-  geog geography NOT NULL,
+  longitude FLOAT NOT NULL,
+  latitude FLOAT NOT NULL,
+  geog GEOMETRY,
   category middleman_pub.task_type NOT NULL,
   mode middleman_pub.task_mode NOT NULL DEFAULT 'opened',
   details TEXT,
@@ -137,6 +152,10 @@ CREATE INDEX ON middleman_pub.task (category);
 CREATE TRIGGER task_updated_at BEFORE UPDATE
   ON middleman_pub.task
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
+
+CREATE TRIGGER task_set_geog BEFORE INSERT OR UPDATE
+  ON middleman_pub.task
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_geog();
 
 COMMENT ON TABLE middleman_pub.task IS
   E'@omit all';
@@ -289,8 +308,8 @@ COMMENT ON FUNCTION middleman_pub.current_person() IS
   'Gets the person who was identified by our JWT.';
 
 CREATE FUNCTION middleman_pub.tasks(
-  lat REAL,
-  long REAL,
+  latitude REAL,
+  longitude REAL,
   task_type middleman_pub.task_type,
   task_status middleman_pub.task_mode
 ) RETURNS SETOF middleman_pub.task as $$
@@ -298,11 +317,12 @@ CREATE FUNCTION middleman_pub.tasks(
   FROM middleman_pub.task
   WHERE middleman_pub.task.mode = task_status
   AND middleman_pub.task.category = task_type
-  ORDER BY middleman_pub.task.geog <-> concat('SRID=26918;POINT(', long, ' ', lat, ')')::geometry;
+  ORDER BY middleman_pub.task.geog <-> concat('SRID=4326;POINT(', longitude, ' ', latitude, ')')::geometry
+  LIMIT 50;
 $$ LANGUAGE sql stable;
 
 COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type, middleman_pub.task_mode) IS
-  'Gets the 50 nearest open tasks given long lat and task type';
+  'Gets the 50 nearest open tasks given longitude latitude and task type';
 
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type, middleman_pub.task_mode) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
