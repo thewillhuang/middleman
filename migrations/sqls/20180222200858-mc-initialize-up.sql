@@ -320,6 +320,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.job TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.comment_tree TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.person_comment TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.person_photo TO sys_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.person_type TO sys_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.job_photo TO sys_admin;
 
 GRANT SELECT ON TABLE m_pub.comment TO middleman_user, middleman_visitor;
@@ -329,6 +330,7 @@ GRANT SELECT ON TABLE m_pub.comment_tree TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.job TO middleman_user;
 GRANT SELECT ON TABLE m_pub.person_comment TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE m_pub.person_photo TO middleman_user;
+GRANT SELECT ON TABLE m_pub.person_type TO middleman_user;
 GRANT SELECT ON TABLE m_pub.job_photo TO middleman_user;
 
 GRANT INSERT, UPDATE ON TABLE m_pub.comment TO middleman_user;
@@ -338,6 +340,7 @@ GRANT INSERT, UPDATE ON TABLE m_pub.comment_tree TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.job TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.person_comment TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.person_photo TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE m_pub.person_type TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.job_photo TO middleman_user;
 
 ALTER TABLE m_pub.comment ENABLE ROW LEVEL SECURITY;
