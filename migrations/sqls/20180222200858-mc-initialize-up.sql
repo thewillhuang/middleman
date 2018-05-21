@@ -100,7 +100,7 @@ COMMENT ON TABLE m_pub.comment_tree IS E'@omit all';
 ALTER TABLE m_pub.comment_tree ADD CONSTRAINT comment_tree_pkey PRIMARY KEY (parent_id, child_id);
 
 CREATE TYPE m_pub.job_mode AS ENUM (
-  'filled',
+  'scheduled',
   'closed',
   'finished',
   'opened'
@@ -108,6 +108,7 @@ CREATE TYPE m_pub.job_mode AS ENUM (
 
 CREATE TYPE m_pub.job_type AS ENUM (
   'car wash',
+  'car detail',
   'elder house cleaning',
   'elder cooking',
   'elder shopping',
@@ -122,6 +123,7 @@ CREATE TABLE m_pub.job (
   geog geography NOT NULL,
   category m_pub.job_type NOT NULL,
   mode m_pub.job_mode NOT NULL DEFAULT 'opened',
+  details TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -258,22 +260,23 @@ $$ LANGUAGE sql stable;
 
 COMMENT ON FUNCTION m_pub.current_person() IS 'Gets the person who was identified by our JWT.';
 
-CREATE FUNCTION m_pub.open_jobs(
+CREATE FUNCTION m_pub.jobs(
   lat REAL,
   long REAL,
-  job_type m_pub.job_type
+  job_type m_pub.job_type,
+  job_status m_pub.job_mode
 ) RETURNS m_pub.job as $$
   SELECT *
   FROM m_pub.job
-  WHERE m_pub.job.mode = 'opened'
+  WHERE m_pub.job.mode = job_status
   AND m_pub.job.category = job_type
   ORDER BY m_pub.job.geog <-> concat('SRID=26918;POINT(', long, ' ', lat, ')')::geometry
   LIMIT 50;
 $$ LANGUAGE sql stable;
 
-COMMENT ON FUNCTION m_pub.open_jobs(REAL, REAL, m_pub.job_type) IS 'Gets the 50 nearest open jobs given long lat and job type';
+COMMENT ON FUNCTION m_pub.jobs(REAL, REAL, m_pub.job_type, m_pub.job_mode) IS 'Gets the 50 nearest open jobs given long lat and job type';
 
-GRANT EXECUTE ON FUNCTION m_pub.open_jobs(REAL, REAL, m_pub.job_type) TO middleman_user;
+GRANT EXECUTE ON FUNCTION m_pub.jobs(REAL, REAL, m_pub.job_type, m_pub.job_mode) TO middleman_user;
 GRANT EXECUTE ON FUNCTION m_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION m_pub.current_person() TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION m_pub.register_person(TEXT, TEXT, TEXT, TEXT) TO middleman_visitor;
