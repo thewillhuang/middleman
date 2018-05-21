@@ -6,7 +6,7 @@ ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM public;
 
 CREATE FUNCTION middleman_pub.set_updated_at() RETURNS TRIGGER AS $$
 BEGIN
-  new.updated_at := current_timestamp;
+  new.updated_at := NOW();
   RETURN new;
 END;
 $$ LANGUAGE plpgsql;
