@@ -22,8 +22,7 @@ CREATE TABLE middleman_pub.phone (
 
 CREATE TRIGGER phone_updated_at BEFORE UPDATE
   ON middleman_pub.phone
-  FOR EACH ROW
-  EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
 COMMENT ON TABLE middleman_pub.phone IS E'@omit all';
 
@@ -45,8 +44,7 @@ CREATE INDEX ON middleman_pub.person (is_client) WHERE is_client = FALSE;
 
 CREATE TRIGGER person_updated_at BEFORE UPDATE
   ON middleman_pub.person
-  FOR EACH ROW
-  EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
 COMMENT ON TABLE middleman_pub.person IS E'@omit all';
 
@@ -59,8 +57,7 @@ CREATE TABLE middleman_pub.photo (
 
 CREATE TRIGGER photo_updated_at BEFORE UPDATE
   ON middleman_pub.photo
-  FOR EACH ROW
-  EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
 COMMENT ON TABLE middleman_pub.photo IS E'@omit all';
 
@@ -77,8 +74,7 @@ CREATE INDEX ON middleman_pub.comment (person_id);
 
 CREATE TRIGGER comment_updated_at BEFORE UPDATE
   ON middleman_pub.comment
-  FOR EACH ROW
-  EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
 COMMENT ON TABLE middleman_pub.comment IS E'@omit all';
 
@@ -92,8 +88,7 @@ CREATE TABLE middleman_pub.comment_tree (
 
 CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
   ON middleman_pub.comment_tree
-  FOR EACH ROW
-  EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
 COMMENT ON TABLE middleman_pub.comment_tree IS E'@omit all';
 
@@ -136,8 +131,7 @@ CREATE INDEX ON middleman_pub.task (category);
 
 CREATE TRIGGER task_updated_at BEFORE UPDATE
   ON middleman_pub.task
-  FOR EACH ROW
-  EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
 COMMENT ON TABLE middleman_pub.task IS E'@omit all';
 
@@ -152,8 +146,7 @@ CREATE INDEX ON middleman_pub.person_comment (person_id);
 
 CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
   ON middleman_pub.person_comment
-  FOR EACH ROW
-  EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
 COMMENT ON TABLE middleman_pub.person_comment IS E'@omit all';
 
@@ -166,8 +159,7 @@ CREATE TABLE middleman_pub.person_type (
 
 CREATE TRIGGER person_type_updated_at BEFORE UPDATE
   ON middleman_pub.person_type
-  FOR EACH ROW
-  EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
 CREATE INDEX ON middleman_pub.person_type (person_id);
 
@@ -182,8 +174,7 @@ CREATE INDEX ON middleman_pub.person_photo (person_id);
 
 CREATE TRIGGER person_photo_updated_at BEFORE UPDATE
   ON middleman_pub.person_photo
-  FOR EACH ROW
-  EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
 COMMENT ON TABLE middleman_pub.person_photo IS E'@omit all';
 
@@ -198,16 +189,21 @@ CREATE INDEX ON middleman_pub.task_photo (task_id);
 
 CREATE TRIGGER task_photo_updated_at BEFORE UPDATE
   ON middleman_pub.task_photo
-  FOR EACH ROW
-  EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
 COMMENT ON TABLE middleman_pub.task_photo IS E'@omit all';
 
 CREATE TABLE middleman_priv.person_account (
   person_id        BIGINT PRIMARY KEY REFERENCES middleman_pub.person ON UPDATE CASCADE,
   email            TEXT NOT NULL UNIQUE CHECK (email ~* '^.+@.+\..+$'),
-  password_hash    TEXT NOT NULL
+  password_hash    TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE TRIGGER person_account_updated_at BEFORE UPDATE
+  ON middleman_priv.person_account
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
 COMMENT ON TABLE middleman_priv.person_account IS 'Private information about a person’s account.';
 COMMENT ON COLUMN middleman_priv.person_account.person_id IS 'The id of the person associated with this account.';
