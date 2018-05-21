@@ -99,14 +99,14 @@ COMMENT ON TABLE middleman_pub.comment_tree IS E'@omit all';
 
 ALTER TABLE middleman_pub.comment_tree ADD CONSTRAINT comment_tree_pkey PRIMARY KEY (parent_id, child_id);
 
-CREATE TYPE middleman_pub.job_mode AS ENUM (
+CREATE TYPE middleman_pub.task_mode AS ENUM (
   'scheduled',
   'closed',
   'finished',
   'opened'
 );
 
-CREATE TYPE middleman_pub.job_type AS ENUM (
+CREATE TYPE middleman_pub.task_type AS ENUM (
   'car wash',
   'car detail',
   'elder bathing',
@@ -118,28 +118,28 @@ CREATE TYPE middleman_pub.job_type AS ENUM (
   'storage'
 );
 
-CREATE TABLE middleman_pub.job (
+CREATE TABLE middleman_pub.task (
   id BIGSERIAL PRIMARY KEY,
   requestor_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
   fulfiller_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
   geog geography NOT NULL,
-  category middleman_pub.job_type NOT NULL,
-  mode middleman_pub.job_mode NOT NULL DEFAULT 'opened',
+  category middleman_pub.task_type NOT NULL,
+  mode middleman_pub.task_mode NOT NULL DEFAULT 'opened',
   details TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX ON middleman_pub.job USING GIST (geog);
-CREATE INDEX ON middleman_pub.job (mode);
-CREATE INDEX ON middleman_pub.job (category);
+CREATE INDEX ON middleman_pub.task USING GIST (geog);
+CREATE INDEX ON middleman_pub.task (mode);
+CREATE INDEX ON middleman_pub.task (category);
 
-CREATE TRIGGER job_updated_at BEFORE UPDATE
-  ON middleman_pub.job
+CREATE TRIGGER task_updated_at BEFORE UPDATE
+  ON middleman_pub.task
   FOR EACH ROW
   EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
-COMMENT ON TABLE middleman_pub.job IS E'@omit all';
+COMMENT ON TABLE middleman_pub.task IS E'@omit all';
 
 CREATE TABLE middleman_pub.person_comment (
   person_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
@@ -159,7 +159,7 @@ COMMENT ON TABLE middleman_pub.person_comment IS E'@omit all';
 
 CREATE TABLE middleman_pub.person_type (
   person_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
-  category middleman_pub.job_type,
+  category middleman_pub.task_type,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -187,21 +187,21 @@ CREATE TRIGGER person_photo_updated_at BEFORE UPDATE
 
 COMMENT ON TABLE middleman_pub.person_photo IS E'@omit all';
 
-CREATE TABLE middleman_pub.job_photo (
-  job_id BIGINT REFERENCES middleman_pub.job ON UPDATE CASCADE,
+CREATE TABLE middleman_pub.task_photo (
+  task_id BIGINT REFERENCES middleman_pub.task ON UPDATE CASCADE,
   photo_id BIGINT REFERENCES middleman_pub.photo ON UPDATE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX ON middleman_pub.job_photo (job_id);
+CREATE INDEX ON middleman_pub.task_photo (task_id);
 
-CREATE TRIGGER job_photo_updated_at BEFORE UPDATE
-  ON middleman_pub.job_photo
+CREATE TRIGGER task_photo_updated_at BEFORE UPDATE
+  ON middleman_pub.task_photo
   FOR EACH ROW
   EXECUTE PROCEDURE middleman_pub.set_updated_at();
 
-COMMENT ON TABLE middleman_pub.job_photo IS E'@omit all';
+COMMENT ON TABLE middleman_pub.task_photo IS E'@omit all';
 
 CREATE TABLE middleman_priv.person_account (
   person_id        BIGINT PRIMARY KEY REFERENCES middleman_pub.person ON UPDATE CASCADE,
@@ -276,23 +276,23 @@ $$ LANGUAGE sql stable;
 
 COMMENT ON FUNCTION middleman_pub.current_person() IS 'Gets the person who was identified by our JWT.';
 
-CREATE FUNCTION middleman_pub.jobs(
+CREATE FUNCTION middleman_pub.tasks(
   lat REAL,
   long REAL,
-  job_type middleman_pub.job_type,
-  job_status middleman_pub.job_mode
-) RETURNS middleman_pub.job as $$
+  task_type middleman_pub.task_type,
+  task_status middleman_pub.task_mode
+) RETURNS middleman_pub.task as $$
   SELECT *
-  FROM middleman_pub.job
-  WHERE middleman_pub.job.mode = job_status
-  AND middleman_pub.job.category = job_type
-  ORDER BY middleman_pub.job.geog <-> concat('SRID=26918;POINT(', long, ' ', lat, ')')::geometry
+  FROM middleman_pub.task
+  WHERE middleman_pub.task.mode = task_status
+  AND middleman_pub.task.category = task_type
+  ORDER BY middleman_pub.task.geog <-> concat('SRID=26918;POINT(', long, ' ', lat, ')')::geometry
   LIMIT 50;
 $$ LANGUAGE sql stable;
 
-COMMENT ON FUNCTION middleman_pub.jobs(REAL, REAL, middleman_pub.job_type, middleman_pub.job_mode) IS 'Gets the 50 nearest open jobs given long lat and job type';
+COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type, middleman_pub.task_mode) IS 'Gets the 50 nearest open tasks given long lat and task type';
 
-GRANT EXECUTE ON FUNCTION middleman_pub.jobs(REAL, REAL, middleman_pub.job_type, middleman_pub.job_mode) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type, middleman_pub.task_mode) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT) TO middleman_visitor;
@@ -311,37 +311,37 @@ GRANT USAGE ON SEQUENCE middleman_pub.comment_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.person_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.phone_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.photo_id_seq TO middleman_user;
-GRANT USAGE ON SEQUENCE middleman_pub.job_id_seq TO middleman_user;
+GRANT USAGE ON SEQUENCE middleman_pub.task_id_seq TO middleman_user;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.comment TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.phone TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.photo TO middleman_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.job TO middleman_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.comment_tree TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_comment TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_photo TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_type TO middleman_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.job_photo TO middleman_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_photo TO middleman_admin;
 
 GRANT SELECT ON TABLE middleman_pub.comment TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.phone TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.photo TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.comment_tree TO middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE middleman_pub.job TO middleman_user;
+GRANT SELECT ON TABLE middleman_pub.task TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.person_comment TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.person_photo TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.person_type TO middleman_user;
-GRANT SELECT ON TABLE middleman_pub.job_photo TO middleman_user;
+GRANT SELECT ON TABLE middleman_pub.task_photo TO middleman_user;
 
 GRANT INSERT, UPDATE ON TABLE middleman_pub.comment TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.phone TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.photo TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.comment_tree TO middleman_user;
-GRANT INSERT, UPDATE ON TABLE middleman_pub.job TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE middleman_pub.task TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_comment TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_photo TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_type TO middleman_user;
-GRANT INSERT, UPDATE ON TABLE middleman_pub.job_photo TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE middleman_pub.task_photo TO middleman_user;
 
 ALTER TABLE middleman_pub.comment ENABLE ROW LEVEL SECURITY;
 
