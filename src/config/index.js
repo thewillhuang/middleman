@@ -1,7 +1,6 @@
 import { join } from 'path';
 import url from 'url';
 import bluebird from 'bluebird';
-import { Pool } from 'pg';
 import ca from './rds-combined-ca-bundle.pem';
 
 const {
@@ -64,5 +63,3 @@ if (!isDevelopment) {
   };
   POSTGRAPHQLCONFIG.readCache = cachePath;
 }
-
-export const pool = new Pool(PGCONFIG);
