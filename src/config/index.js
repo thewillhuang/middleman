@@ -3,11 +3,13 @@ import url from 'url';
 import bluebird from 'bluebird';
 import ca from './rds-combined-ca-bundle.pem';
 
+const DATABASE = 'middleman';
+
 const {
   PORT = 3000,
   NODE_ENV = 'development',
   JWT_SECRET = 'lololol',
-  DB_URL = 'postgresql://williamhuang@localhost/middleman',
+  DB_URL = `postgresql://williamhuang@localhost/${DATABASE}`,
 } = process.env;
 
 const params = url.parse(DB_URL);
@@ -29,8 +31,8 @@ export const POSTGRAPHQLCONFIG = {
   disableQueryLog: isProduction,
   extendedErrors: ['hint', 'detail', 'errcode'],
   jwtSecret: JWT_SECRET,
-  jwtPgTypeIdentifier: 'm_pub.jwt_token',
-  pgDefaultRole: 'middleman_visitor',
+  jwtPgTypeIdentifier: `${DATABASE}_pub.jwt_token`,
+  pgDefaultRole: `${DATABASE}_visitor`,
   legacyRelations: 'omit',
   exportGqlSchemaPath: join(__dirname, '../../dist', 'schema.graphql'),
   jwtVerifyOptions: {
@@ -41,7 +43,7 @@ export const POSTGRAPHQLCONFIG = {
   },
 };
 
-export const schemas = ['m_pub'];
+export const schemas = [`${DATABASE}_pub`];
 
 export const PGCONFIG = {
   user: auth[0],
@@ -49,7 +51,7 @@ export const PGCONFIG = {
   host: params.hostname,
   port: params.port,
   database: params.pathname.split('/')[1],
-  idleTimeoutMillis: isDevelopment ? 1000 : 0.001,
+  idleTimeoutMillis: 1000,
   connectionTimeoutMillis: 5000,
   Promise: bluebird,
 };

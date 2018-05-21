@@ -1,8 +1,10 @@
 import { createPostGraphileSchema } from 'postgraphile-core';
-import { POSTGRAPHQLCONFIG, schemas, cachePath, pool } from './config';
+import { POSTGRAPHQLCONFIG, schemas, cachePath, PGCONFIG } from './config';
+import cachedPool from './cachedPool';
 
 async function main() {
   console.log('generating cache');
+  const pool = cachedPool(PGCONFIG);
   await createPostGraphileSchema(pool, schemas, {
     ...POSTGRAPHQLCONFIG,
     writeCache: cachePath,

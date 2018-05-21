@@ -6,6 +6,7 @@ import {
   APPPORT as PORT,
   POSTGRAPHQLCONFIG,
   schemas,
+  PGCONFIG,
   ENV,
   isDevelopment,
 } from './config/index';
@@ -18,7 +19,7 @@ if (isDevelopment) {
 app.get('/', (req, res) => {
   res.send('pong');
 });
-app.use(postgraphile(cachedPool(), schemas, POSTGRAPHQLCONFIG));
+app.use(postgraphile(cachedPool(PGCONFIG), schemas, POSTGRAPHQLCONFIG));
 app.listen(PORT);
 
 console.log(`nodejs server starting at port: ${PORT} in ${ENV} mode`);

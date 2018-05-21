@@ -1,9 +1,8 @@
 import { Pool } from 'pg';
-import { PGCONFIG } from './config/index';
 
 let cachedPool = null;
 
-export default () => {
+export default (PGCONFIG) => {
   if (!cachedPool) {
     cachedPool = new Pool(PGCONFIG);
   }
