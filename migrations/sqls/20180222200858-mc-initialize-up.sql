@@ -147,7 +147,6 @@ CREATE TABLE middleman_pub.task (
   geog GEOMETRY,
   category middleman_pub.task_type NOT NULL,
   mode middleman_pub.task_mode NOT NULL DEFAULT 'opened',
-  details TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -167,14 +166,37 @@ CREATE TRIGGER task_set_geog_column BEFORE INSERT OR UPDATE
 COMMENT ON TABLE middleman_pub.task IS
   E'@omit all';
 
+CREATE TABLE middleman_pub.task_attribute (
+  id BIGSERIAL PRIMARY KEY,
+  attribute TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TRIGGER task_attribute_updated_at BEFORE UPDATE
+  ON middleman_pub.task_attribute
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
+
+CREATE TABLE middleman_pub.task_detail (
+  task_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
+  attribute_id BIGINT NOT NULL UNIQUE REFERENCES middleman_pub.person ON UPDATE CASCADE,
+  detail TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TRIGGER task_detail_updated_at BEFORE UPDATE
+  ON middleman_pub.task_detail
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
+
+CREATE INDEX ON middleman_pub.task_detail (task_id);
+
 CREATE TABLE middleman_pub.person_comment (
   person_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
   comment_id BIGINT REFERENCES middleman_pub.comment ON UPDATE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-
-CREATE INDEX ON middleman_pub.person_comment (person_id);
 
 CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
   ON middleman_pub.person_comment
@@ -351,11 +373,14 @@ GRANT USAGE ON SEQUENCE middleman_pub.person_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.phone_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.photo_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.task_id_seq TO middleman_user;
+GRANT USAGE ON SEQUENCE middleman_pub.task_attribute_id_seq TO middleman_user;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.comment TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.phone TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.photo TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task TO middleman_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_attribute TO middleman_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_detail TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.comment_tree TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_comment TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_photo TO middleman_admin;
@@ -367,6 +392,8 @@ GRANT SELECT ON TABLE middleman_pub.phone TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.photo TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.comment_tree TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.task TO middleman_user;
+GRANT SELECT ON TABLE middleman_pub.task_attribute TO middleman_user;
+GRANT SELECT ON TABLE middleman_pub.task_detail TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.person_comment TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.person_photo TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.person_type TO middleman_user;
@@ -377,6 +404,8 @@ GRANT INSERT, UPDATE ON TABLE middleman_pub.phone TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.photo TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.comment_tree TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.task TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE middleman_pub.task_attribute TO middleman_user;
+GRANT INSERT, UPDATE ON TABLE middleman_pub.task_detail TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_comment TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_photo TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_type TO middleman_user;
