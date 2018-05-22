@@ -4,14 +4,14 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS postgis;
 ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM public;
 
-CREATE FUNCTION middleman_pub.set_updated_at() RETURNS TRIGGER AS $$
+CREATE FUNCTION middleman_pub.set_updated_at_column() RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at := NOW();
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION middleman_pub.set_geog() RETURNS TRIGGER AS $$
+CREATE FUNCTION middleman_pub.set_geog_column() RETURNS TRIGGER AS $$
 BEGIN
   NEW.geog := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4269);
   RETURN NEW;
@@ -29,7 +29,7 @@ CREATE TABLE middleman_pub.phone (
 
 CREATE TRIGGER phone_updated_at BEFORE UPDATE
   ON middleman_pub.phone
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.phone IS
   E'@omit all';
@@ -41,8 +41,8 @@ CREATE TABLE middleman_pub.person (
   first_name TEXT,
   last_name TEXT,
   phone_id BIGINT REFERENCES middleman_pub.phone ON UPDATE CASCADE,
-  longitude FLOAT NOT NULL,
-  latitude FLOAT NOT NULL,
+  longitude FLOAT NOT NULL DEFAULT 0,
+  latitude FLOAT NOT NULL DEFAULT 0,
   geog GEOMETRY,
   is_client BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -54,11 +54,11 @@ CREATE INDEX ON middleman_pub.person (is_client) WHERE is_client = FALSE;
 
 CREATE TRIGGER person_updated_at BEFORE UPDATE
   ON middleman_pub.person
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
-CREATE TRIGGER PERSON_set_geog BEFORE INSERT OR UPDATE
+CREATE TRIGGER PERSON_set_geog_column BEFORE INSERT OR UPDATE
   ON middleman_pub.person
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_geog();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_geog_column();
 
 COMMENT ON TABLE middleman_pub.person IS
   E'@omit all';
@@ -72,7 +72,7 @@ CREATE TABLE middleman_pub.photo (
 
 CREATE TRIGGER photo_updated_at BEFORE UPDATE
   ON middleman_pub.photo
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.photo IS
   E'@omit all';
@@ -90,7 +90,7 @@ CREATE INDEX ON middleman_pub.comment (person_id);
 
 CREATE TRIGGER comment_updated_at BEFORE UPDATE
   ON middleman_pub.comment
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.comment IS
   E'@omit all';
@@ -105,7 +105,7 @@ CREATE TABLE middleman_pub.comment_tree (
 
 CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
   ON middleman_pub.comment_tree
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.comment_tree IS
   E'@omit all';
@@ -122,11 +122,18 @@ CREATE TYPE middleman_pub.task_mode AS ENUM (
 CREATE TYPE middleman_pub.task_type AS ENUM (
   'car wash',
   'car detail',
+  'car oil change',
+  'car headlights',
+  'home plumming',
+  'home pest control',
+  'home appliance fixing',
+  'home water softening',
+  'home water filter',
+  'cleaning',
   'elder bathing',
   'elder cooking',
-  'elder house cleaning',
-  'elder longitude term',
   'elder shopping',
+  'maid',
   'medical tourism',
   'storage'
 );
@@ -151,11 +158,11 @@ CREATE INDEX ON middleman_pub.task (category);
 
 CREATE TRIGGER task_updated_at BEFORE UPDATE
   ON middleman_pub.task
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
-CREATE TRIGGER task_set_geog BEFORE INSERT OR UPDATE
+CREATE TRIGGER task_set_geog_column BEFORE INSERT OR UPDATE
   ON middleman_pub.task
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_geog();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_geog_column();
 
 COMMENT ON TABLE middleman_pub.task IS
   E'@omit all';
@@ -171,7 +178,7 @@ CREATE INDEX ON middleman_pub.person_comment (person_id);
 
 CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
   ON middleman_pub.person_comment
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.person_comment IS
   E'@omit all';
@@ -185,7 +192,7 @@ CREATE TABLE middleman_pub.person_type (
 
 CREATE TRIGGER person_type_updated_at BEFORE UPDATE
   ON middleman_pub.person_type
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 CREATE INDEX ON middleman_pub.person_type (person_id);
 
@@ -200,7 +207,7 @@ CREATE INDEX ON middleman_pub.person_photo (person_id);
 
 CREATE TRIGGER person_photo_updated_at BEFORE UPDATE
   ON middleman_pub.person_photo
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.person_photo IS
   E'@omit all';
@@ -216,7 +223,7 @@ CREATE INDEX ON middleman_pub.task_photo (task_id);
 
 CREATE TRIGGER task_photo_updated_at BEFORE UPDATE
   ON middleman_pub.task_photo
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.task_photo IS
   E'@omit all';
@@ -231,7 +238,7 @@ CREATE TABLE middleman_priv.person_account (
 
 CREATE TRIGGER person_account_updated_at BEFORE UPDATE
   ON middleman_priv.person_account
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at();
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_priv.person_account IS
   'Private information about a person’s account.';
@@ -310,21 +317,21 @@ COMMENT ON FUNCTION middleman_pub.current_person() IS
 CREATE FUNCTION middleman_pub.tasks(
   latitude REAL,
   longitude REAL,
-  task_type middleman_pub.task_type,
-  task_status middleman_pub.task_mode
+  task_types middleman_pub.task_type[],
+  task_status middleman_pub.task_mode default 'opened'
 ) RETURNS SETOF middleman_pub.task as $$
   SELECT *
   FROM middleman_pub.task
   WHERE middleman_pub.task.mode = task_status
-  AND middleman_pub.task.category = task_type
+  AND middleman_pub.task.category = ANY (task_types)
   ORDER BY middleman_pub.task.geog <-> concat('SRID=4326;POINT(', longitude, ' ', latitude, ')')
-  LIMIT 50;
+  LIMIT 500;
 $$ LANGUAGE sql stable;
 
-COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type, middleman_pub.task_mode) IS
+COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) IS
   'Gets the 50 nearest open tasks given longitude latitude and task type';
 
-GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type, middleman_pub.task_mode) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT) TO middleman_visitor;
