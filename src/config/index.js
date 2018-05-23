@@ -18,7 +18,7 @@ const auth = params.auth.split(':');
 export const ENV = NODE_ENV;
 
 export const isDevelopment = NODE_ENV === 'development';
-
+export const isTest = NODE_ENV === 'test';
 export const isProduction = NODE_ENV === 'production';
 
 export const APPPORT = PORT;
@@ -28,7 +28,7 @@ export const POSTGRAPHQLCONFIG = {
   graphiql: true,
   watchPg: isDevelopment,
   graphqlRoute: '/',
-  disableQueryLog: isProduction,
+  disableQueryLog: isProduction || isTest,
   extendedErrors: ['hint', 'detail', 'errcode'],
   jwtSecret: JWT_SECRET,
   jwtPgTypeIdentifier: `${DATABASE}_pub.jwt_token`,
@@ -56,12 +56,12 @@ export const PGCONFIG = {
   Promise: bluebird,
 };
 
-export const cachePath = join(__dirname, '../../dist/postgraphile.cache');
+export const cachePath = '../../dist/postgraphile.cache';
 
-if (!isDevelopment) {
+if (!isDevelopment && !isTest) {
   PGCONFIG.ssl = {
     rejectUnauthorized: true,
     ca,
   };
-  POSTGRAPHQLCONFIG.readCache = cachePath;
+  POSTGRAPHQLCONFIG.readCache = join(__dirname, cachePath);
 }

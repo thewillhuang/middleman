@@ -1,4 +1,5 @@
 import { createPostGraphileSchema } from 'postgraphile-core';
+import { join } from 'path';
 import { POSTGRAPHQLCONFIG, schemas, cachePath, PGCONFIG } from './config';
 import cachedPool from './cachedPool';
 
@@ -7,7 +8,7 @@ async function main() {
   const pool = cachedPool(PGCONFIG);
   await createPostGraphileSchema(pool, schemas, {
     ...POSTGRAPHQLCONFIG,
-    writeCache: cachePath,
+    writeCache: join(__dirname, cachePath),
   });
   await pool.end();
 }
