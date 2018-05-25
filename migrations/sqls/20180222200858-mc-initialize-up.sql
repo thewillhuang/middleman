@@ -125,6 +125,8 @@ CREATE TYPE middleman_pub.task_type AS ENUM (
   'car oil change',
   'car headlights',
   'car tire replacement',
+  'car windshield wiper',
+  'car air filter change',
   'home plumming',
   'home pest control',
   'home appliance fixing',
@@ -136,7 +138,7 @@ CREATE TYPE middleman_pub.task_type AS ENUM (
   'elder shopping',
   'maid',
   'medical tourism',
-  'storage'
+  'storage pickup'
 );
 
 CREATE TABLE middleman_pub.task (
