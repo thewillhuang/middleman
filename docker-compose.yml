@@ -4,7 +4,6 @@ webapp:
     - "./:/src/"
   links:
     - "db"
-  command: sh ./wait-for-pg.sh db npm run test
 
 db:
   image: mdillon/postgis
