@@ -1,7 +1,5 @@
 webapp:
   build: .
-  volumes:
-    - "./:/src/"
   links:
     - "db"
 

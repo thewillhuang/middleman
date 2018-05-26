@@ -4,8 +4,10 @@ RUN mkdir /src
 
 WORKDIR /src
 
-ADD ./package.json /src/package.json
+COPY package.json .
 
-RUN npm install
+RUN npm install --quiet
+
+COPY . .
 
 CMD sh ./wait-for-pg.sh db npm run test
