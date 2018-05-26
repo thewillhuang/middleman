@@ -7,7 +7,7 @@ host="$1"
 shift
 cmd="$@"
 
-until ./node_modules/.bin/db-migrate up -e test; do
+until npm run db:up:test; do
   >&2 echo "Postgres is unavailable - sleeping"
   sleep 1
 done
