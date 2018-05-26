@@ -20,8 +20,6 @@ export const isProduction = NODE_ENV === 'production';
 const params = url.parse(isTest ? `postgresql://williamhuang@db/${DATABASE}` : DB_URL);
 const auth = params.auth.split(':');
 
-console.log(auth);
-
 export const APPPORT = PORT;
 
 export const POSTGRAPHQLCONFIG = {
