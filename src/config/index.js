@@ -33,7 +33,7 @@ export const POSTGRAPHQLCONFIG = {
   jwtPgTypeIdentifier: `${DATABASE}_pub.jwt_token`,
   pgDefaultRole: `${DATABASE}_visitor`,
   legacyRelations: 'omit',
-  exportGqlSchemaPath: join(__dirname, '../../dist', 'schema.graphql'),
+  exportGqlSchemaPath: isTest ? '' : join(__dirname, '../../dist', 'schema.graphql'),
   jwtVerifyOptions: {
     algorithms: ['HS256'],
     maxAge: '1h',
