@@ -22,26 +22,6 @@ const auth = params.auth.split(':');
 
 export const APPPORT = PORT;
 
-export const POSTGRAPHQLCONFIG = {
-  dynamicJson: true,
-  graphiql: true,
-  watchPg: isDevelopment,
-  graphqlRoute: '/',
-  disableQueryLog: isProduction,
-  extendedErrors: ['hint', 'detail', 'errcode'],
-  jwtSecret: JWT_SECRET,
-  jwtPgTypeIdentifier: `${DATABASE}_pub.jwt_token`,
-  pgDefaultRole: `${DATABASE}_visitor`,
-  legacyRelations: 'omit',
-  // exportGqlSchemaPath: isTest ? '' : join(__dirname, '../../dist', 'schema.graphql'),
-  jwtVerifyOptions: {
-    algorithms: ['HS256'],
-    maxAge: '1h',
-    audience: 'postgraphile',
-    issuer: 'postgraphile',
-  },
-};
-
 export const schemas = [`${DATABASE}_pub`];
 
 export const PGCONFIG = {
@@ -57,6 +37,25 @@ export const PGCONFIG = {
 
 export const cachePath = '../../dist/postgraphile.cache';
 
+export const POSTGRAPHQLCONFIG = {
+  dynamicJson: true,
+  graphiql: true,
+  watchPg: isDevelopment,
+  graphqlRoute: '/',
+  disableQueryLog: isProduction,
+  extendedErrors: ['hint', 'detail', 'errcode'],
+  jwtSecret: JWT_SECRET,
+  jwtPgTypeIdentifier: `${DATABASE}_pub.jwt_token`,
+  pgDefaultRole: `${DATABASE}_visitor`,
+  legacyRelations: 'omit',
+  jwtVerifyOptions: {
+    algorithms: ['HS256'],
+    maxAge: '1h',
+    audience: 'postgraphile',
+    issuer: 'postgraphile',
+  },
+};
+
 if (!isDevelopment && !isTest) {
   PGCONFIG.ssl = {
     rejectUnauthorized: true,
@@ -64,3 +63,8 @@ if (!isDevelopment && !isTest) {
   };
   POSTGRAPHQLCONFIG.readCache = join(__dirname, cachePath);
 }
+
+if (!isTest) {
+  POSTGRAPHQLCONFIG.exportGqlSchemaPath = join(__dirname, '../../dist', 'schema.graphql');
+}
+
