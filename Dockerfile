@@ -1,8 +1,8 @@
 FROM node
 
-RUN mkdir /src
+RUN mkdir /webapp
 
-WORKDIR /src
+WORKDIR /webapp
 
 COPY package.json .
 
