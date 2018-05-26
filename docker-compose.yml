@@ -2,14 +2,12 @@ webapp:
   build: .
   volumes:
     - "./:/src/"
-  ports:
-    - "3000:3000"
   links:
     - "db"
+  command: sh ./wait-for-pg.sh db npm run test
 
 db:
-  image: postgres
+  image: mdillon/postgis
   environment:
-    - POSTGRES_PASSWORD=postgres
-  ports:
-    - "5432:5432"
+    POSTGRES_USER: "williamhuang"
+    POSTGRES_DB: "middleman"

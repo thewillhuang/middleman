@@ -3,23 +3,24 @@ import url from 'url';
 import bluebird from 'bluebird';
 import ca from './rds-combined-ca-bundle.pem';
 
-const DATABASE = 'middleman';
 
 const {
   PORT = 3000,
+  DATABASE = 'middleman',
   NODE_ENV = 'development',
   JWT_SECRET = 'lololol',
   DB_URL = `postgresql://williamhuang@localhost/${DATABASE}`,
 } = process.env;
 
-const params = url.parse(DB_URL);
-const auth = params.auth.split(':');
-
 export const ENV = NODE_ENV;
-
 export const isDevelopment = NODE_ENV === 'development';
 export const isTest = NODE_ENV === 'test';
 export const isProduction = NODE_ENV === 'production';
+
+const params = url.parse(isTest ? `postgresql://williamhuang@db/${DATABASE}` : DB_URL);
+const auth = params.auth.split(':');
+
+console.log(auth);
 
 export const APPPORT = PORT;
 

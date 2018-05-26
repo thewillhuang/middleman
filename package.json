@@ -24,6 +24,7 @@
     "db:create": "createdb middleman",
     "db:drop": "dropdb middleman",
     "db:up": "db-migrate up",
+    "db:up:test": "db-migrate up -e test",
     "db:r": "yarn db:down && yarn db:drop && yarn db:create && yarn db:up",
     "db:down": "db-migrate down"
   },
@@ -38,8 +39,8 @@
     "babel-preset-env": "^1.6.1",
     "babel-preset-stage-0": "^6.24.1",
     "babel-register": "^6.26.0",
-    "db-migrate": "^0.10.5",
-    "db-migrate-pg": "^0.3.1",
+    "db-migrate": "^0.11.1",
+    "db-migrate-pg": "^0.4.0",
     "eslint": "^4.18.0",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-import": "^2.8.0",
