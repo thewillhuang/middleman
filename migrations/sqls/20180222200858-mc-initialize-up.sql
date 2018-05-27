@@ -203,6 +203,9 @@ CREATE TRIGGER person_type_updated_at BEFORE UPDATE
 
 CREATE UNIQUE INDEX ON middleman_pub.person_type (person_id, category);
 
+COMMENT ON TABLE middleman_pub.person_type IS
+  E'@omit all';
+
 CREATE TABLE middleman_pub.person_photo (
   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
   photo_id BIGINT NOT NULL REFERENCES middleman_pub.photo ON UPDATE CASCADE,
@@ -210,7 +213,7 @@ CREATE TABLE middleman_pub.person_photo (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX ON middleman_pub.person_photo (person_id);
+CREATE UNIQUE INDEX ON middleman_pub.person_photo (person_id, photo_id);
 
 CREATE TRIGGER person_photo_updated_at BEFORE UPDATE
   ON middleman_pub.person_photo
@@ -226,7 +229,7 @@ CREATE TABLE middleman_pub.task_photo (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX ON middleman_pub.task_photo (task_id);
+CREATE UNIQUE INDEX ON middleman_pub.task_photo (task_id, photo_id);
 
 CREATE TRIGGER task_photo_updated_at BEFORE UPDATE
   ON middleman_pub.task_photo
