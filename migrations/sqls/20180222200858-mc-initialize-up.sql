@@ -34,8 +34,6 @@ CREATE TRIGGER phone_updated_at BEFORE UPDATE
 COMMENT ON TABLE middleman_pub.phone IS
   E'@omit all';
 
-ALTER TABLE middleman_pub.phone ADD CONSTRAINT phone_number UNIQUE (country_code, phone, ext);
-
 CREATE TABLE middleman_pub.person (
   id BIGSERIAL PRIMARY KEY,
   first_name TEXT NOT NULL,
