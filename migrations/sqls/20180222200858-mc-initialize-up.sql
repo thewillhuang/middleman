@@ -331,7 +331,7 @@ CREATE FUNCTION middleman_pub.tasks(
   FROM middleman_pub.task
   WHERE middleman_pub.task.mode = task_status
   AND middleman_pub.task.category = ANY (task_types)
-  ORDER BY middleman_pub.task.geog <-> concat('SRID=4326;POINT(', longitude, ' ', latitude, ')')
+  ORDER BY middleman_pub.task.geog <-> concat('SRID=4269;POINT(', longitude, ' ', latitude, ')')::GEOMETRY
   LIMIT 100;
 $$ LANGUAGE sql stable;
 
@@ -372,8 +372,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_type TO middl
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_photo TO middleman_admin;
 
 GRANT SELECT ON TABLE middleman_pub.comment TO middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE middleman_pub.phone TO middleman_user, middleman_visitor;
-GRANT SELECT ON TABLE middleman_pub.photo TO middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE middleman_pub.phone TO middleman_user;
+GRANT SELECT ON TABLE middleman_pub.photo TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.comment_tree TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.task TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.task_attribute TO middleman_user;
