@@ -3,7 +3,6 @@ import url from 'url';
 import bluebird from 'bluebird';
 import ca from './rds-combined-ca-bundle.pem';
 
-
 const {
   PORT = 3000,
   DATABASE = 'middleman',

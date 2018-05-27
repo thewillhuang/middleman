@@ -170,19 +170,13 @@ COMMENT ON TABLE middleman_pub.task IS
   E'@omit all';
 
 CREATE TABLE middleman_pub.task_attribute (
-  id BIGSERIAL PRIMARY KEY,
-  attribute TEXT NOT NULL UNIQUE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  id SERIAL PRIMARY KEY,
+  attribute TEXT NOT NULL UNIQUE
 );
-
-CREATE TRIGGER task_attribute_updated_at BEFORE UPDATE
-  ON middleman_pub.task_attribute
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 CREATE TABLE middleman_pub.task_detail (
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
-  attribute_id BIGINT NOT NULL UNIQUE REFERENCES middleman_pub.task_attribute ON UPDATE CASCADE,
+  attribute_id INT NOT NULL UNIQUE REFERENCES middleman_pub.task_attribute ON UPDATE CASCADE,
   detail TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -192,20 +186,9 @@ CREATE TRIGGER task_detail_updated_at BEFORE UPDATE
   ON middleman_pub.task_detail
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
-CREATE INDEX ON middleman_pub.task_detail (task_id);
+CREATE UNIQUE INDEX ON middleman_pub.task_detail (task_id, attribute_id);
 
-CREATE TABLE middleman_pub.person_comment (
-  person_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
-  comment_id BIGINT REFERENCES middleman_pub.comment ON UPDATE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TRIGGER person_comment_updated_at BEFORE UPDATE
-  ON middleman_pub.person_comment
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
-
-COMMENT ON TABLE middleman_pub.person_comment IS
+COMMENT ON TABLE middleman_pub.task_detail IS
   E'@omit all';
 
 CREATE TABLE middleman_pub.person_type (
@@ -385,7 +368,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task TO middleman_ad
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_attribute TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_detail TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.comment_tree TO middleman_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_comment TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_photo TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_type TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_photo TO middleman_admin;
@@ -397,7 +379,6 @@ GRANT SELECT ON TABLE middleman_pub.comment_tree TO middleman_user, middleman_vi
 GRANT SELECT ON TABLE middleman_pub.task TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.task_attribute TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.task_detail TO middleman_user;
-GRANT SELECT ON TABLE middleman_pub.person_comment TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.person_photo TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.person_type TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.task_photo TO middleman_user;
@@ -409,7 +390,6 @@ GRANT INSERT, UPDATE ON TABLE middleman_pub.comment_tree TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.task TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.task_attribute TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.task_detail TO middleman_user;
-GRANT INSERT, UPDATE ON TABLE middleman_pub.person_comment TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_photo TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_type TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.task_photo TO middleman_user;
