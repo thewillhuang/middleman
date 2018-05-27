@@ -15,17 +15,5 @@
     }],
     "transform-async-to-bluebird",
     "transform-promise-to-bluebird"
-  ],
-  "env": {
-    "test": {
-      "presets": [
-        ["env", {
-          "targets": {
-            "node": true
-          }
-        }],
-        "stage-0"
-      ]
-    }
-  }
+  ]
 }
