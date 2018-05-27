@@ -38,8 +38,8 @@ ALTER TABLE middleman_pub.phone ADD CONSTRAINT phone_number UNIQUE (country_code
 
 CREATE TABLE middleman_pub.person (
   id BIGSERIAL PRIMARY KEY,
-  first_name TEXT,
-  last_name TEXT,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
   phone_id BIGINT REFERENCES middleman_pub.phone ON UPDATE CASCADE,
   longitude FLOAT NOT NULL DEFAULT 0,
   latitude FLOAT NOT NULL DEFAULT 0,
@@ -194,7 +194,7 @@ COMMENT ON TABLE middleman_pub.task_detail IS
 
 CREATE TABLE middleman_pub.person_type (
   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
-  category middleman_pub.task_type,
+  category middleman_pub.task_type NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
