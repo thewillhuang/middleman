@@ -201,7 +201,7 @@ CREATE TRIGGER person_type_updated_at BEFORE UPDATE
   ON middleman_pub.person_type
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
-CREATE INDEX ON middleman_pub.person_type (person_id);
+CREATE UNIQUE INDEX ON middleman_pub.person_type (person_id, category);
 
 CREATE TABLE middleman_pub.person_photo (
   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
