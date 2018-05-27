@@ -1,5 +1,6 @@
 import request from 'supertest';
 import faker from 'faker';
+import { POSTGRAPHQLCONFIG } from '../config/index';
 import app from '../server';
 
 describe('user query', () => {
@@ -21,7 +22,7 @@ describe('user query', () => {
       }`,
     };
     await request(app)
-      .post('/')
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
   });
@@ -39,7 +40,7 @@ describe('user query', () => {
       }`,
     };
     const { body } = await request(app)
-      .post('/')
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
     jwt = body.data.authenticate.jwtToken;
@@ -57,7 +58,7 @@ describe('user query', () => {
       }`,
     };
     const { body } = await request(app)
-      .post('/')
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .set('Authorization', `bearer ${jwt}`)
       .send(payload)
       .expect(200);

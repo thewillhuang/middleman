@@ -42,6 +42,7 @@ export const POSTGRAPHQLCONFIG = {
   graphiql: true,
   watchPg: isDevelopment,
   graphqlRoute: '/',
+  enableQueryBatching: true,
   disableQueryLog: isProduction,
   extendedErrors: ['hint', 'detail', 'errcode'],
   jwtSecret: JWT_SECRET,

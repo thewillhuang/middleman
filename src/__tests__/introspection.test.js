@@ -1,10 +1,11 @@
 import request from 'supertest';
 import app from '../server';
+import { POSTGRAPHQLCONFIG } from '../config/index';
 
 describe('introspection query', () => {
   it('should not fail', async () => {
     await request(app)
-      .post('/')
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send({
         query: `
         query IntrospectionQuery {
