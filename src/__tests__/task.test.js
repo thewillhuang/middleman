@@ -188,4 +188,25 @@ describe('user query', () => {
       .expect(200);
     expect(body).toHaveProperty(['errors']);
   });
+
+  it('rejects unauthroized users from seeing tasks ', async () => {
+    const payload = {
+      query: `query {
+        tasks(longitude:${longitude}, latitude: ${latitude}, taskTypes:[${category}]) {
+          edges {
+            node {
+              id
+              category
+            }
+          },
+          totalCount
+        }
+      }`,
+    };
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .send(payload)
+      .expect(200);
+    expect(body).toHaveProperty(['errors']);
+  });
 });
