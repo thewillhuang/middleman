@@ -20,7 +20,7 @@
     "prod": "up production",
     "open": "up url -o",
     "test": "jest",
-    "test:local": "NODE_ENV=development jest --verbose",
+    "test:local": "NODE_ENV=development DEBUG='*:sql' jest --verbose",
     "logs": "up logs -f",
     "db:create": "createdb middleman",
     "db:drop": "dropdb middleman",
