@@ -23,8 +23,8 @@ CREATE TABLE middleman_pub.phone (
   country_code TEXT NOT NULL,
   phone TEXT NOT NULL,
   ext TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TRIGGER phone_updated_at BEFORE UPDATE
@@ -45,8 +45,8 @@ CREATE TABLE middleman_pub.person (
   latitude FLOAT NOT NULL DEFAULT 0,
   geog GEOMETRY,
   is_client BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX ON middleman_pub.person USING GIST (geog);
@@ -66,8 +66,8 @@ COMMENT ON TABLE middleman_pub.person IS
 CREATE TABLE middleman_pub.photo (
   id BIGSERIAL PRIMARY KEY,
   url TEXT NOT NULL UNIQUE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TRIGGER photo_updated_at BEFORE UPDATE
@@ -82,8 +82,8 @@ CREATE TABLE middleman_pub.comment (
   commentary TEXT,
   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
   stars SMALLINT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX ON middleman_pub.comment (person_id);
@@ -99,8 +99,8 @@ CREATE TABLE middleman_pub.comment_tree (
   parent_id BIGINT NOT NULL REFERENCES middleman_pub.comment ON UPDATE CASCADE,
   child_id BIGINT NOT NULL REFERENCES middleman_pub.comment ON UPDATE CASCADE,
   depth SMALLINT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
@@ -143,15 +143,16 @@ CREATE TYPE middleman_pub.task_type AS ENUM (
 
 CREATE TABLE middleman_pub.task (
   id BIGSERIAL PRIMARY KEY,
-  requestor_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
+  requestor_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
   fulfiller_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
   longitude FLOAT NOT NULL,
   latitude FLOAT NOT NULL,
+  scheduled_for TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   geog GEOMETRY,
   category middleman_pub.task_type NOT NULL,
   mode middleman_pub.task_mode NOT NULL DEFAULT 'opened',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX ON middleman_pub.task USING GIST (geog);
@@ -178,8 +179,8 @@ CREATE TABLE middleman_pub.task_detail (
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
   attribute_id INT NOT NULL UNIQUE REFERENCES middleman_pub.task_attribute ON UPDATE CASCADE,
   detail TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TRIGGER task_detail_updated_at BEFORE UPDATE
@@ -192,10 +193,10 @@ COMMENT ON TABLE middleman_pub.task_detail IS
   E'@omit all';
 
 CREATE TABLE middleman_pub.person_type (
-  person_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
+  person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
   category middleman_pub.task_type,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TRIGGER person_type_updated_at BEFORE UPDATE
@@ -205,10 +206,10 @@ CREATE TRIGGER person_type_updated_at BEFORE UPDATE
 CREATE INDEX ON middleman_pub.person_type (person_id);
 
 CREATE TABLE middleman_pub.person_photo (
-  person_id BIGINT REFERENCES middleman_pub.person ON UPDATE CASCADE,
-  photo_id BIGINT REFERENCES middleman_pub.photo ON UPDATE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
+  photo_id BIGINT NOT NULL REFERENCES middleman_pub.photo ON UPDATE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX ON middleman_pub.person_photo (person_id);
@@ -221,10 +222,10 @@ COMMENT ON TABLE middleman_pub.person_photo IS
   E'@omit all';
 
 CREATE TABLE middleman_pub.task_photo (
-  task_id BIGINT REFERENCES middleman_pub.task ON UPDATE CASCADE,
-  photo_id BIGINT REFERENCES middleman_pub.photo ON UPDATE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
+  photo_id BIGINT NOT NULL REFERENCES middleman_pub.photo ON UPDATE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX ON middleman_pub.task_photo (task_id);
@@ -240,8 +241,8 @@ CREATE TABLE middleman_priv.person_account (
   person_id        BIGINT PRIMARY KEY REFERENCES middleman_pub.person ON UPDATE CASCADE,
   email            TEXT NOT NULL UNIQUE CHECK (email ~* '^.+@.+\..+$'),
   password_hash    TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TRIGGER person_account_updated_at BEFORE UPDATE
