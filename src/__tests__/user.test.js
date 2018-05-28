@@ -66,4 +66,24 @@ describe('user query', () => {
     expect(body.data.currentPerson.firstName).toEqual(firstName);
     expect(body.data.currentPerson.lastName).toEqual(lastName);
   });
+
+  it('reject wrong email or password', async () => {
+    const payload = {
+      query: `mutation {
+        authenticate(input:{
+          email:"${faker.internet.email()}",
+          password:"${faker.internet.password()}",
+        }) {
+          jwtToken
+        }
+      }`,
+    };
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .send(payload)
+      .expect(200);
+    jwt = body.data.authenticate.jwtToken;
+    console.log(body);
+    expect(body.data.authenticate.jwtToken).toBe(null);
+  });
 });
