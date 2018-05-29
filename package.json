@@ -21,7 +21,7 @@
     "prod": "up production",
     "open": "up url -o",
     "test": "jest --forceExit",
-    "test:local": "NODE_ENV=development jest --verbose",
+    "test:local": "NODE_ENV=development jest --verbose --forceExit",
     "logs": "up logs -f",
     "db:create": "createdb middleman",
     "db:drop": "dropdb middleman",
