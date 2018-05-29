@@ -11,7 +11,7 @@ export default (PGCONFIG) => {
   cachedPool.on('error', async (error, client) => {
     client.release();
     await cachedPool.end();
-    cachedPool = null;
+    cachedPool = new Pool(PGCONFIG);
   });
 
   return cachedPool;
