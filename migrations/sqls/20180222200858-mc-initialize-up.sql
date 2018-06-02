@@ -13,7 +13,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE FUNCTION middleman_pub.set_geog_column() RETURNS TRIGGER AS $$
 BEGIN
-  NEW.geog := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4269);
+  NEW.geog := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -335,7 +335,7 @@ CREATE FUNCTION middleman_pub.tasks(
   FROM middleman_pub.task
   WHERE middleman_pub.task.mode = task_status
   AND middleman_pub.task.category = ANY (task_types)
-  ORDER BY middleman_pub.task.geog <-> concat('SRID=4269;POINT(', longitude, ' ', latitude, ')')::GEOMETRY
+  ORDER BY middleman_pub.task.geog <-> concat('SRID=4326;POINT(', longitude, ' ', latitude, ')')::GEOMETRY
   LIMIT 100;
 $$ LANGUAGE sql stable;
 
