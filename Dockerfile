@@ -6,8 +6,8 @@ WORKDIR /webapp
 
 COPY package.json .
 
-RUN npm install --quiet
+RUN yarn
 
 COPY . .
 
-CMD sh ./wait-for-pg.sh db npm run test
+CMD sh ./wait-for-pg.sh db yarn test
