@@ -125,6 +125,7 @@ CREATE TYPE middleman_pub.task_type AS ENUM (
   'car tire replacement',
   'car windshield wiper',
   'car air filter change',
+  'photoshop',
   'home plumming',
   'home pest control',
   'home appliance fixing',
