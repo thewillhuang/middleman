@@ -342,6 +342,56 @@ $$ LANGUAGE sql stable;
 COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) IS
   'Gets the 50 nearest open tasks given longitude latitude and task type';
 
+CREATE FUNCTION middleman_pub.comment_child(
+  id BIGINT
+) RETURNS SETOF middleman_pub.comment as $$
+    SELECT c.*
+    FROM middleman_pub.comment AS c
+      JOIN middleman_pub.comment_tree AS t ON c.id = t.child_id
+    WHERE t.parent_id = id;
+$$ LANGUAGE sql stable;
+
+COMMENT ON FUNCTION middleman_pub.comment_child(BIGINT) IS
+  'Gets the childs of comment by id';
+
+CREATE FUNCTION middleman_pub.comment_parent(
+  id BIGINT
+) RETURNS SETOF middleman_pub.comment as $$
+  SELECT c.*
+  FROM middleman_pub.comment AS c
+    JOIN middleman_pub.comment_tree AS t ON c.id = t.parent_id
+  WHERE t.child_id = id;
+$$ LANGUAGE sql stable;
+
+COMMENT ON FUNCTION middleman_pub.comment_parent(BIGINT) IS
+  'Gets the parent of comment by id';
+
+CREATE FUNCTION middleman_pub.insert_comment(
+  parent_id BIGINT,
+  comment_id BIGINT
+) RETURNS middleman_pub.comment_tree as $$
+  BEGIN
+    INSERT INTO middleman_pub.comment_tree (ancestor, descendant)
+    SELECT t.parent_id, comment_id
+    FROM middleman_pub.comment_tree AS t
+    WHERE t.child_id = parent_id
+    UNION ALL
+      SELECT comment_id, comment_id;
+  END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION middleman_pub.insert_comment(BIGINT, BIGINT) IS
+  'insert comment ';
+
+-- CREATE FUNCTION middleman_pub.delete_comment(
+--   comment_id BIGINT
+-- ) RETURNS middleman_pub.comment_tree as $$
+--   DELETE FROM middleman_pub.comment_tree WHERE child_id = comment_id;
+-- $$ LANGUAGE plpgsql;
+
+-- COMMENT ON FUNCTION middleman_pub.delete_comment(BIGINT) IS
+--   'delete comment by id';
+
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
