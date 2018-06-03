@@ -166,7 +166,7 @@ describe('user query', () => {
     expect(body.data.tasks.totalCount).toBeGreaterThan(totalCount);
   });
 
-  it('rejects unauthroized users from making tests', async () => {
+  it('rejects unauthroized users from making tasks', async () => {
     const payload = {
       query: `mutation {
         createTask(input: {task:{

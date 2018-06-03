@@ -334,7 +334,7 @@ CREATE FUNCTION middleman_pub.tasks(
   latitude REAL,
   longitude REAL,
   task_types middleman_pub.task_type[],
-  task_status middleman_pub.task_mode default 'opened'
+  task_status middleman_pub.task_mode DEFAULT 'opened'
 ) RETURNS SETOF middleman_pub.task as $$
   SELECT *
   FROM middleman_pub.task
@@ -345,7 +345,7 @@ CREATE FUNCTION middleman_pub.tasks(
 $$ LANGUAGE sql stable;
 
 COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) IS
-  'Gets the 50 nearest open tasks given longitude latitude and task type';
+  'Gets the 100 nearest open tasks given longitude latitude and task type ordered by distance';
 
 CREATE FUNCTION middleman_pub.comment_child(
   id BIGINT
