@@ -409,8 +409,8 @@ COMMENT ON FUNCTION middleman_pub.remove_comment(BIGINT) IS
   'delete comment by id';
 
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
-GRANT EXECUTE ON FUNCTION middleman_pub.comment_parent(BIGINT) TO middleman_user;
-GRANT EXECUTE ON FUNCTION middleman_pub.comment_child(BIGINT) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.comment_parent(BIGINT) TO middleman_user, middleman_visitor;
+GRANT EXECUTE ON FUNCTION middleman_pub.comment_child(BIGINT) TO middleman_user, middleman_visitor;
 GRANT EXECUTE ON FUNCTION middleman_pub.remove_comment(BIGINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT, SMALLINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
@@ -469,7 +469,6 @@ GRANT INSERT, UPDATE ON TABLE middleman_pub.person_type TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.task_photo TO middleman_user;
 
 ALTER TABLE middleman_pub.comment ENABLE ROW LEVEL SECURITY;
-ALTER TABLE middleman_pub.comment_tree ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY select_comment ON middleman_pub.comment FOR SELECT TO middleman_user, middleman_visitor
   USING (true);
@@ -483,7 +482,9 @@ CREATE POLICY update_comment ON middleman_pub.comment FOR UPDATE TO middleman_us
 CREATE POLICY delete_comment ON middleman_pub.comment FOR DELETE TO middleman_user
   USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
 
-CREATE POLICY select_comment ON middleman_pub.comment_tree FOR SELECT TO middleman_user, middleman_visitor
+ALTER TABLE middleman_pub.comment_tree ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY select_comment_tree ON middleman_pub.comment_tree FOR SELECT TO middleman_user, middleman_visitor
   USING (true);
 
 CREATE POLICY insert_comment_tree ON middleman_pub.comment_tree FOR INSERT TO middleman_user
