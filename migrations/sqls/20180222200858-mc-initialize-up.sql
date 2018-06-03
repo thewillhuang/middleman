@@ -80,6 +80,7 @@ CREATE TABLE middleman_pub.comment (
   commentary TEXT,
   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
   stars SMALLINT,
+  deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -352,7 +353,7 @@ CREATE FUNCTION middleman_pub.comment_child(
 $$ LANGUAGE sql stable;
 
 COMMENT ON FUNCTION middleman_pub.comment_child(BIGINT) IS
-  'Gets the childs of comment by id';
+  'get the childs of comment by id';
 
 CREATE FUNCTION middleman_pub.comment_parent(
   id BIGINT
@@ -364,14 +365,14 @@ CREATE FUNCTION middleman_pub.comment_parent(
 $$ LANGUAGE sql stable;
 
 COMMENT ON FUNCTION middleman_pub.comment_parent(BIGINT) IS
-  'Gets the parent of comment by id';
+  'get the parents of comment by id';
 
-CREATE FUNCTION middleman_pub.insert_comment(
+CREATE FUNCTION middleman_pub.reply_comment(
   parent_id BIGINT,
   comment_id BIGINT
 ) RETURNS middleman_pub.comment_tree as $$
   BEGIN
-    INSERT INTO middleman_pub.comment_tree (ancestor, descendant)
+    INSERT INTO middleman_pub.comment_tree (parent_id, comment_id)
     SELECT t.parent_id, comment_id
     FROM middleman_pub.comment_tree AS t
     WHERE t.child_id = parent_id
@@ -380,18 +381,28 @@ CREATE FUNCTION middleman_pub.insert_comment(
   END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION middleman_pub.insert_comment(BIGINT, BIGINT) IS
-  'insert comment ';
+COMMENT ON FUNCTION middleman_pub.reply_comment(BIGINT, BIGINT) IS
+  'insert comment given parent comment id';
 
--- CREATE FUNCTION middleman_pub.delete_comment(
---   comment_id BIGINT
--- ) RETURNS middleman_pub.comment_tree as $$
---   DELETE FROM middleman_pub.comment_tree WHERE child_id = comment_id;
--- $$ LANGUAGE plpgsql;
+CREATE FUNCTION middleman_pub.remove_comment(
+  comment_id BIGINT
+) RETURNS middleman_pub.comment AS $$
+  BEGIN
+    UPDATE middleman_pub.comment
+    SET deleted = true
+    WHERE id = comment_id;
+    -- RETURNS *;
+  END;
+$$ LANGUAGE plpgsql;
 
--- COMMENT ON FUNCTION middleman_pub.delete_comment(BIGINT) IS
---   'delete comment by id';
+COMMENT ON FUNCTION middleman_pub.remove_comment(BIGINT) IS
+  'delete comment by id';
 
+GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.comment_parent(BIGINT) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.comment_child(BIGINT) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.remove_comment(BIGINT) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.reply_comment(BIGINT, BIGINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
