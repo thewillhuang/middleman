@@ -426,6 +426,7 @@ GRANT USAGE ON SEQUENCE middleman_pub.photo_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.task_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.task_attribute_id_seq TO middleman_user;
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.comment TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.phone TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.photo TO middleman_admin;
@@ -439,9 +440,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_photo TO middle
 
 GRANT SELECT ON TABLE middleman_pub.person TO middleman_visitor, middleman_user;
 GRANT SELECT ON TABLE middleman_pub.comment TO middleman_user, middleman_visitor;
+GRANT SELECT ON TABLE middleman_pub.comment_tree TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.phone TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.photo TO middleman_user;
-GRANT SELECT ON TABLE middleman_pub.comment_tree TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.task TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.task_attribute TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.task_detail TO middleman_user;
