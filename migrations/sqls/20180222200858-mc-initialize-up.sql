@@ -378,13 +378,13 @@ CREATE FUNCTION middleman_pub.reply_comment(
   WITH comment_id AS (
     INSERT INTO middleman_pub.comment (commentary, person_id, stars)
     VALUES (commentary, author_id, stars) RETURNING id
-  )
-  INSERT INTO middleman_pub.comment_tree (parent_id, comment_id)
-    (SELECT t.parent_id, comment_id
+  ) INSERT INTO middleman_pub.comment_tree (parent_id, comment_id) (
+    SELECT t.parent_id, comment_id
     FROM middleman_pub.comment_tree AS t
     WHERE t.child_id = parent_id
     UNION ALL
-      SELECT comment_id, comment_id);
+      (SELECT comment_id, comment_id)
+  );
 
   END;
 $$ LANGUAGE plpgsql;
