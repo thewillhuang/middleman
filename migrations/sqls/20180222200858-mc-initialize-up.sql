@@ -401,8 +401,8 @@ CREATE FUNCTION middleman_pub.remove_comment(
   BEGIN
     UPDATE middleman_pub.comment
     SET deleted = true
-    WHERE id = comment_id;
-    -- RETURNS *;
+    WHERE id = comment_id
+    RETURNING *;
   END;
 $$ LANGUAGE plpgsql;
 
