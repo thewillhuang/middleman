@@ -97,10 +97,13 @@ COMMENT ON TABLE middleman_pub.comment IS
 CREATE TABLE middleman_pub.comment_tree (
   parent_id BIGINT NOT NULL REFERENCES middleman_pub.comment ON UPDATE CASCADE,
   child_id BIGINT NOT NULL REFERENCES middleman_pub.comment ON UPDATE CASCADE,
+  person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
   depth SMALLINT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX ON middleman_pub.comment_tree (person_id);
 
 CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
   ON middleman_pub.comment_tree
@@ -378,12 +381,12 @@ CREATE FUNCTION middleman_pub.reply_with_comment(
   WITH comment_id AS (
     INSERT INTO middleman_pub.comment (commentary, person_id, stars)
     VALUES (commentary, author_id, stars) RETURNING id
-  ) INSERT INTO middleman_pub.comment_tree (parent_id, comment_id) (
-    SELECT t.parent_id, comment_id
+  ) INSERT INTO middleman_pub.comment_tree (parent_id, comment_id, person_id) (
+    SELECT t.parent_id, comment_id, person_id
     FROM middleman_pub.comment_tree AS t
     WHERE t.child_id = parent_id
     UNION ALL
-      (SELECT comment_id, comment_id)
+      (SELECT comment_id, comment_id, author_id)
   );
   END;
 $$ LANGUAGE plpgsql;
@@ -466,15 +469,28 @@ GRANT INSERT, UPDATE ON TABLE middleman_pub.person_type TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.task_photo TO middleman_user;
 
 ALTER TABLE middleman_pub.comment ENABLE ROW LEVEL SECURITY;
+ALTER TABLE middleman_pub.comment_tree ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY select_COMMENT ON middleman_pub.comment FOR SELECT TO middleman_user, middleman_visitor
+CREATE POLICY select_comment ON middleman_pub.comment FOR SELECT TO middleman_user, middleman_visitor
   USING (true);
 
-CREATE POLICY insert_COMMENT ON middleman_pub.comment FOR INSERT TO middleman_user
+CREATE POLICY insert_comment ON middleman_pub.comment FOR INSERT TO middleman_user
   WITH CHECK (person_id = current_setting('jwt.claims.person_id')::INTEGER);
 
-CREATE POLICY update_COMMENT ON middleman_pub.comment FOR UPDATE TO middleman_user
+CREATE POLICY update_comment ON middleman_pub.comment FOR UPDATE TO middleman_user
   USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
 
-CREATE POLICY delete_COMMENT ON middleman_pub.comment FOR DELETE TO middleman_user
+CREATE POLICY delete_comment ON middleman_pub.comment FOR DELETE TO middleman_user
+  USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
+
+CREATE POLICY select_comment ON middleman_pub.comment_tree FOR SELECT TO middleman_user, middleman_visitor
+  USING (true);
+
+CREATE POLICY insert_comment_tree ON middleman_pub.comment_tree FOR INSERT TO middleman_user
+  WITH CHECK (person_id = current_setting('jwt.claims.person_id')::INTEGER);
+
+CREATE POLICY update_comment_tree ON middleman_pub.comment_tree FOR UPDATE TO middleman_user
+  USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
+
+CREATE POLICY delete_comment_tree ON middleman_pub.comment_tree FOR DELETE TO middleman_user
   USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
