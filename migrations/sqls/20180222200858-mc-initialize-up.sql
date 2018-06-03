@@ -367,7 +367,7 @@ $$ LANGUAGE sql stable;
 COMMENT ON FUNCTION middleman_pub.comment_parent(BIGINT) IS
   'get the parents of comment by id';
 
-CREATE FUNCTION middleman_pub.reply_comment(
+CREATE FUNCTION middleman_pub.reply_with_comment(
   parent_id BIGINT,
   commentary TEXT,
   stars SMALLINT
@@ -385,11 +385,10 @@ CREATE FUNCTION middleman_pub.reply_comment(
     UNION ALL
       (SELECT comment_id, comment_id)
   );
-
   END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION middleman_pub.reply_comment(BIGINT, TEXT, SMALLINT) IS
+COMMENT ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT, SMALLINT) IS
   'reply comment given parent comment id';
 
 CREATE FUNCTION middleman_pub.remove_comment(
@@ -410,7 +409,7 @@ GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_typ
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_parent(BIGINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_child(BIGINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.remove_comment(BIGINT) TO middleman_user;
-GRANT EXECUTE ON FUNCTION middleman_pub.reply_comment(BIGINT, TEXT, SMALLINT) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT, SMALLINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
