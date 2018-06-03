@@ -369,20 +369,28 @@ COMMENT ON FUNCTION middleman_pub.comment_parent(BIGINT) IS
 
 CREATE FUNCTION middleman_pub.reply_comment(
   parent_id BIGINT,
-  comment_id BIGINT
-) RETURNS middleman_pub.comment_tree as $$
+  commentary TEXT,
+  stars SMALLINT
+) RETURNS void as $$
+  DECLARE
+  author_id CONSTANT BIGINT := (SELECT id FROM current_person());
   BEGIN
-    INSERT INTO middleman_pub.comment_tree (parent_id, comment_id)
-    SELECT t.parent_id, comment_id
+  WITH comment_id AS (
+    INSERT INTO middleman_pub.comment (commentary, person_id, stars)
+    VALUES (commentary, author_id, stars) RETURNING id
+  )
+  INSERT INTO middleman_pub.comment_tree (parent_id, comment_id)
+    (SELECT t.parent_id, comment_id
     FROM middleman_pub.comment_tree AS t
     WHERE t.child_id = parent_id
     UNION ALL
-      SELECT comment_id, comment_id;
+      SELECT comment_id, comment_id);
+
   END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION middleman_pub.reply_comment(BIGINT, BIGINT) IS
-  'insert comment given parent comment id';
+COMMENT ON FUNCTION middleman_pub.reply_comment(BIGINT, TEXT, SMALLINT) IS
+  'reply comment given parent comment id';
 
 CREATE FUNCTION middleman_pub.remove_comment(
   comment_id BIGINT
@@ -402,7 +410,7 @@ GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_typ
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_parent(BIGINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_child(BIGINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.remove_comment(BIGINT) TO middleman_user;
-GRANT EXECUTE ON FUNCTION middleman_pub.reply_comment(BIGINT, BIGINT) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.reply_comment(BIGINT, TEXT, SMALLINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
