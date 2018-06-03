@@ -289,9 +289,10 @@ COMMENT ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT) IS
 
 CREATE ROLE middleman_admin LOGIN PASSWORD 'voodoo3d';
 CREATE ROLE middleman_visitor;
-GRANT middleman_visitor TO middleman_admin;
 CREATE ROLE middleman_user;
+GRANT middleman_visitor TO middleman_admin;
 GRANT middleman_user TO middleman_admin;
+GRANT USAGE ON SCHEMA middleman_pub TO middleman_visitor, middleman_user, middleman_admin;
 
 CREATE TYPE middleman_pub.jwt_token AS (
   role TEXT,
@@ -417,16 +418,6 @@ GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_typ
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT) TO middleman_visitor;
-GRANT USAGE ON SCHEMA middleman_pub TO middleman_visitor, middleman_user, middleman_admin;
-GRANT SELECT ON TABLE middleman_pub.person TO middleman_visitor, middleman_user;
-GRANT UPDATE, DELETE ON TABLE middleman_pub.person TO middleman_user;
-ALTER TABLE middleman_pub.person ENABLE ROW LEVEL SECURITY;
-CREATE POLICY select_person ON middleman_pub.person FOR SELECT TO middleman_user, middleman_visitor
-  USING (true);
-CREATE POLICY update_person ON middleman_pub.person FOR UPDATE TO middleman_user
-  USING (id = current_setting('jwt.claims.person_id')::INTEGER);
-CREATE POLICY delete_person ON middleman_pub.person FOR delete TO middleman_user
-  USING (id = current_setting('jwt.claims.person_id')::INTEGER);
 
 GRANT USAGE ON SEQUENCE middleman_pub.comment_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.person_id_seq TO middleman_user;
@@ -446,6 +437,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_photo TO midd
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_type TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_photo TO middleman_admin;
 
+GRANT SELECT ON TABLE middleman_pub.person TO middleman_visitor, middleman_user;
 GRANT SELECT ON TABLE middleman_pub.comment TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.phone TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.photo TO middleman_user;
@@ -457,6 +449,7 @@ GRANT SELECT ON TABLE middleman_pub.person_photo TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.person_type TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.task_photo TO middleman_user;
 
+GRANT UPDATE, DELETE ON TABLE middleman_pub.person TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.comment TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.phone TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.photo TO middleman_user;
@@ -469,29 +462,29 @@ GRANT INSERT, UPDATE ON TABLE middleman_pub.person_type TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.task_photo TO middleman_user;
 
 ALTER TABLE middleman_pub.comment ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY select_comment ON middleman_pub.comment FOR SELECT TO middleman_user, middleman_visitor
   USING (true);
-
 CREATE POLICY insert_comment ON middleman_pub.comment FOR INSERT TO middleman_user
   WITH CHECK (person_id = current_setting('jwt.claims.person_id')::INTEGER);
-
 CREATE POLICY update_comment ON middleman_pub.comment FOR UPDATE TO middleman_user
   USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
-
 CREATE POLICY delete_comment ON middleman_pub.comment FOR DELETE TO middleman_user
   USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
 
 ALTER TABLE middleman_pub.comment_tree ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY select_comment_tree ON middleman_pub.comment_tree FOR SELECT TO middleman_user, middleman_visitor
   USING (true);
-
 CREATE POLICY insert_comment_tree ON middleman_pub.comment_tree FOR INSERT TO middleman_user
   WITH CHECK (person_id = current_setting('jwt.claims.person_id')::INTEGER);
-
 CREATE POLICY update_comment_tree ON middleman_pub.comment_tree FOR UPDATE TO middleman_user
   USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
-
 CREATE POLICY delete_comment_tree ON middleman_pub.comment_tree FOR DELETE TO middleman_user
   USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
+
+ALTER TABLE middleman_pub.person ENABLE ROW LEVEL SECURITY;
+CREATE POLICY select_person ON middleman_pub.person FOR SELECT TO middleman_user, middleman_visitor
+  USING (true);
+CREATE POLICY update_person ON middleman_pub.person FOR UPDATE TO middleman_user
+  USING (id = current_setting('jwt.claims.person_id')::INTEGER);
+CREATE POLICY delete_person ON middleman_pub.person FOR delete TO middleman_user
+  USING (id = current_setting('jwt.claims.person_id')::INTEGER);
