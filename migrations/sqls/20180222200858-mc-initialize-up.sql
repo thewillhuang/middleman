@@ -180,7 +180,7 @@ CREATE TABLE middleman_pub.task_attribute (
 
 CREATE TABLE middleman_pub.task_detail (
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
-  attribute_id INT NOT NULL UNIQUE REFERENCES middleman_pub.task_attribute ON UPDATE CASCADE,
+  attribute_id INT NOT NULL REFERENCES middleman_pub.task_attribute ON UPDATE CASCADE,
   detail TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
