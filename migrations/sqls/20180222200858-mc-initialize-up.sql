@@ -122,26 +122,39 @@ CREATE TYPE middleman_pub.task_mode AS ENUM (
 );
 
 CREATE TYPE middleman_pub.task_type AS ENUM (
-  'car wash',
-  'car detail',
-  'car oil change',
-  'car headlights',
-  'car tire replacement',
-  'car windshield wiper',
   'car air filter change',
-  'photoshop',
-  'home plumming',
-  'home pest control',
-  'home appliance fixing',
-  'home water softening',
-  'home water filter',
-  'home cleaning',
+  'car detail',
+  'car headlights upgrade',
+  'car oil change',
+  'car selling',
+  'car tire replacement',
+  'car wash',
+  'car windshield wiper',
+  'car battery change',
   'elder bathing',
   'elder cooking',
   'elder shopping',
+  'home appliance fixing',
+  'home cleaning',
+  'home pest control',
+  'home plumming',
+  'home water filter',
+  'home water softening',
+  'logo design',
   'maid',
+  'massage',
   'medical tourism',
+  'pet bnb',
+  'photoshop',
   'storage pickup'
+);
+
+CREATE TYPE middleman_pub.task_attribute AS ENUM (
+  'car make',
+  'car model',
+  'car year',
+  'car license plate',
+  'car color'
 );
 
 CREATE TABLE middleman_pub.task (
@@ -173,14 +186,9 @@ CREATE TRIGGER task_set_geog_column BEFORE INSERT OR UPDATE
 COMMENT ON TABLE middleman_pub.task IS
   E'@omit all';
 
-CREATE TABLE middleman_pub.task_attribute (
-  id SERIAL PRIMARY KEY,
-  attribute TEXT NOT NULL UNIQUE
-);
-
 CREATE TABLE middleman_pub.task_detail (
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
-  attribute_id INT NOT NULL REFERENCES middleman_pub.task_attribute ON UPDATE CASCADE,
+  attribute_id middleman_pub.task_attribute NOT NULL,
   detail TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -424,14 +432,12 @@ GRANT USAGE ON SEQUENCE middleman_pub.person_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.phone_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.photo_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.task_id_seq TO middleman_user;
-GRANT USAGE ON SEQUENCE middleman_pub.task_attribute_id_seq TO middleman_user;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.comment TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.phone TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.photo TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task TO middleman_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_attribute TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_detail TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.comment_tree TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_photo TO middleman_admin;
@@ -444,7 +450,6 @@ GRANT SELECT ON TABLE middleman_pub.comment_tree TO middleman_user, middleman_vi
 GRANT SELECT ON TABLE middleman_pub.phone TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.photo TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.task TO middleman_user;
-GRANT SELECT ON TABLE middleman_pub.task_attribute TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.task_detail TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.person_photo TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.person_type TO middleman_user;
@@ -456,7 +461,6 @@ GRANT INSERT, UPDATE ON TABLE middleman_pub.phone TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.photo TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.comment_tree TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.task TO middleman_user;
-GRANT INSERT, UPDATE ON TABLE middleman_pub.task_attribute TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.task_detail TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_photo TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_type TO middleman_user;
