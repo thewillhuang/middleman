@@ -154,7 +154,8 @@ CREATE TYPE middleman_pub.task_attribute AS ENUM (
   'car model',
   'car year',
   'car license plate',
-  'car color'
+  'car color',
+  'direction notes'
 );
 
 CREATE TABLE middleman_pub.task (
@@ -188,7 +189,7 @@ COMMENT ON TABLE middleman_pub.task IS
 
 CREATE TABLE middleman_pub.task_detail (
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
-  attribute_id middleman_pub.task_attribute NOT NULL,
+  attribute middleman_pub.task_attribute NOT NULL,
   detail TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -198,7 +199,7 @@ CREATE TRIGGER task_detail_updated_at BEFORE UPDATE
   ON middleman_pub.task_detail
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
-CREATE UNIQUE INDEX ON middleman_pub.task_detail (task_id, attribute_id);
+CREATE UNIQUE INDEX ON middleman_pub.task_detail (task_id, attribute);
 
 COMMENT ON TABLE middleman_pub.task_detail IS
   E'@omit all';
