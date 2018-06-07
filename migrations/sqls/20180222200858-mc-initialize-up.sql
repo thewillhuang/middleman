@@ -75,45 +75,6 @@ CREATE TRIGGER photo_updated_at BEFORE UPDATE
 COMMENT ON TABLE middleman_pub.photo IS
   E'@omit all';
 
-CREATE TABLE middleman_pub.comment (
-  id BIGSERIAL PRIMARY KEY,
-  commentary TEXT,
-  person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
-  stars SMALLINT,
-  deleted BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX ON middleman_pub.comment (person_id);
-
-CREATE TRIGGER comment_updated_at BEFORE UPDATE
-  ON middleman_pub.comment
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
-
-COMMENT ON TABLE middleman_pub.comment IS
-  E'@omit all';
-
-CREATE TABLE middleman_pub.comment_tree (
-  parent_id BIGINT NOT NULL REFERENCES middleman_pub.comment ON UPDATE CASCADE,
-  child_id BIGINT NOT NULL REFERENCES middleman_pub.comment ON UPDATE CASCADE,
-  person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
-  depth SMALLINT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX ON middleman_pub.comment_tree (person_id);
-
-CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
-  ON middleman_pub.comment_tree
-  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
-
-COMMENT ON TABLE middleman_pub.comment_tree IS
-  E'@omit all';
-
-ALTER TABLE middleman_pub.comment_tree ADD CONSTRAINT comment_tree_pkey PRIMARY KEY (parent_id, child_id);
-
 CREATE TYPE middleman_pub.task_mode AS ENUM (
   'scheduled',
   'closed',
@@ -203,6 +164,47 @@ CREATE UNIQUE INDEX ON middleman_pub.task_detail (task_id, attribute);
 
 COMMENT ON TABLE middleman_pub.task_detail IS
   E'@omit all';
+
+CREATE TABLE middleman_pub.comment (
+  id BIGSERIAL PRIMARY KEY,
+  commentary TEXT,
+  person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
+  task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
+  stars SMALLINT,
+  deleted BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX ON middleman_pub.comment (task_id);
+CREATE INDEX ON middleman_pub.comment (person_id);
+
+CREATE TRIGGER comment_updated_at BEFORE UPDATE
+  ON middleman_pub.comment
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
+
+COMMENT ON TABLE middleman_pub.comment IS
+  E'@omit all';
+
+CREATE TABLE middleman_pub.comment_tree (
+  parent_id BIGINT NOT NULL REFERENCES middleman_pub.comment ON UPDATE CASCADE,
+  child_id BIGINT NOT NULL REFERENCES middleman_pub.comment ON UPDATE CASCADE,
+  person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
+  depth SMALLINT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX ON middleman_pub.comment_tree (person_id);
+
+CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
+  ON middleman_pub.comment_tree
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
+
+COMMENT ON TABLE middleman_pub.comment_tree IS
+  E'@omit all';
+
+ALTER TABLE middleman_pub.comment_tree ADD CONSTRAINT comment_tree_pkey PRIMARY KEY (parent_id, child_id);
 
 CREATE TABLE middleman_pub.person_type (
   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
@@ -471,7 +473,10 @@ ALTER TABLE middleman_pub.comment ENABLE ROW LEVEL SECURITY;
 CREATE POLICY select_comment ON middleman_pub.comment FOR SELECT TO middleman_user, middleman_visitor
   USING (true);
 CREATE POLICY insert_comment ON middleman_pub.comment FOR INSERT TO middleman_user
-  WITH CHECK (person_id = current_setting('jwt.claims.person_id')::INTEGER);
+  WITH CHECK (
+    (person_id = current_setting('jwt.claims.person_id')::INTEGER) AND
+    ((SELECT mode FROM middleman_pub.task WHERE id = task_id) = 'finished')
+  );
 CREATE POLICY update_comment ON middleman_pub.comment FOR UPDATE TO middleman_user
   USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
 CREATE POLICY delete_comment ON middleman_pub.comment FOR DELETE TO middleman_user
