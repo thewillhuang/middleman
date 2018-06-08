@@ -351,7 +351,7 @@ CREATE FUNCTION middleman_pub.tasks(
   FROM middleman_pub.task
   WHERE middleman_pub.task.mode = task_status
   AND middleman_pub.task.category = ANY (task_types)
-  ORDER BY middleman_pub.task.geog <-> concat('SRID=4326;POINT(', longitude, ' ', latitude, ')')::GEOMETRY
+  ORDER BY middleman_pub.task.geog <-> concat('SRID=4326;POINT(', longitude, ' ', latitude, ')')
   LIMIT 100;
 $$ LANGUAGE sql stable;
 
