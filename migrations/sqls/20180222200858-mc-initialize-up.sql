@@ -152,6 +152,7 @@ CREATE TABLE middleman_pub.task_detail (
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
   attribute middleman_pub.task_attribute NOT NULL,
   detail TEXT NOT NULL,
+  PRIMARY KEY (task_id, attribute),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
