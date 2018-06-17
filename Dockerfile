@@ -10,4 +10,4 @@ RUN yarn
 
 COPY . .
 
-CMD sh ./wait-for-pg.sh db yarn test
+CMD sh ./wait-for-pg.sh "npm run db:up:test" "yarn test"
