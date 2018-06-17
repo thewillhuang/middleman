@@ -9,8 +9,9 @@
     "postgraphile": "^4.0.0-beta.9"
   },
   "scripts": {
-    "start": "yarn clean && webpack --progress --mode=development --watch & yarn dev",
-    "dev": "NODE_ENV=development DEBUG='*:sql' nodemon -e js,jsx,sql,json dist/main.js",
+    "start": "yarn clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql,json --exec 'yarn dev'",
+    "predev": "yarn db:r",
+    "dev": "NODE_ENV=development DEBUG='*:sql' node dist/main.js",
     "backup": "mv ./node_modules/ ./node_modules_bak/ && mv ./.yarnclean_bak ./.yarnclean",
     "restore": "rm -fr node_modules && mv ./node_modules_bak/ ./node_modules/ &&  mv ./.yarnclean ./.yarnclean_bak",
     "build": "yarn clean && webpack --mode=production && yarn run backup && yarn --ignore-engines --prod",
