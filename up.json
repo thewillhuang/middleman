@@ -3,6 +3,7 @@
   "profile": "default",
   "hooks": {
     "build": "yarn build",
+    "predeploy": "yarn makeCache",
     "clean": "yarn restore"
   },
   "proxy": {

@@ -34,7 +34,7 @@ export const PGCONFIG = {
   Promise: bluebird,
 };
 
-export const cachePath = '../../dist/postgraphile.cache';
+export const cachePath = '../dist/postgraphile.cache';
 
 export const POSTGRAPHQLCONFIG = {
   dynamicJson: true,
