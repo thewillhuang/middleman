@@ -16,7 +16,7 @@
     "restore": "rm -fr node_modules && mv ./node_modules_bak/ ./node_modules/ &&  mv ./.yarnclean ./.yarnclean_bak",
     "build": "yarn clean && webpack --mode=production && yarn run backup && yarn --ignore-engines --prod",
     "clean": "rm -fr dist",
-    "makeCache": "node dist/makeCache",
+    "makeCache": "node ./dist/makeCache",
     "stage": "up staging",
     "prod": "up production",
     "open": "up url -o",

@@ -2,9 +2,8 @@
   "name": "gql-api",
   "profile": "default",
   "hooks": {
-    "build": "yarn build",
-    "predeploy": "yarn makeCache",
-    "clean": "yarn restore"
+    "build": "yarn run build",
+    "clean": "yarn run restore"
   },
   "proxy": {
     "command": "PORT=$PORT NODE_ENV=$UP_STAGE node dist/main"
