@@ -13,12 +13,6 @@
   "plugins": [
     "ramda",
     "lodash",
-    [
-      "transform-inline-imports-commonjs",
-      {
-        "excludeNodeBuiltins": true
-      }
-    ],
     "transform-async-to-bluebird",
     "transform-promise-to-bluebird",
     "transform-runtime"
