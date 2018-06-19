@@ -75,49 +75,58 @@ CREATE TRIGGER photo_updated_at BEFORE UPDATE
 COMMENT ON TABLE middleman_pub.photo IS
   E'@omit all';
 
-CREATE TYPE middleman_pub.task_mode AS ENUM (
-  'scheduled',
-  'closed',
-  'finished',
-  'opened'
+CREATE TABLE middleman_pub.task_mode (
+  mode TEXT PRIMARY KEY
 );
 
-CREATE TYPE middleman_pub.task_type AS ENUM (
-  'car air filter change',
-  'car detail',
-  'car headlights upgrade',
-  'car oil change',
-  'car selling',
-  'car tire replacement',
-  'car wash',
-  'car windshield wiper',
-  'car battery change',
-  'elder bathing',
-  'elder cooking',
-  'elder shopping',
-  'home appliance fixing',
-  'home cleaning',
-  'home pest control',
-  'home plumming',
-  'home water filter',
-  'home water softening',
-  'logo design',
-  'maid',
-  'massage',
-  'medical tourism',
-  'pet bnb',
-  'photoshop',
-  'storage pickup'
+INSERT INTO middleman_pub.task_mode (mode) VALUES
+  ('scheduled'),
+  ('closed'),
+  ('finished'),
+  ('opened');
+
+CREATE TABLE middleman_pub.task_type (
+  task_type TEXT PRIMARY KEY
 );
 
-CREATE TYPE middleman_pub.task_attribute AS ENUM (
-  'car make',
-  'car model',
-  'car year',
-  'car license plate',
-  'car color',
-  'direction notes'
+INSERT INTO middleman_pub.task_type (task_type) VALUES
+  ('car air filter change'),
+  ('car detail'),
+  ('car headlights upgrade'),
+  ('car oil change'),
+  ('car selling'),
+  ('car tire replacement'),
+  ('car wash'),
+  ('car windshield wiper'),
+  ('car battery change'),
+  ('elder bathing'),
+  ('elder cooking'),
+  ('elder shopping'),
+  ('home appliance fixing'),
+  ('home cleaning'),
+  ('home pest control'),
+  ('home plumming'),
+  ('home water filter'),
+  ('home water softening'),
+  ('logo design'),
+  ('maid'),
+  ('massage'),
+  ('medical tourism'),
+  ('pet bnb'),
+  ('photoshop'),
+  ('storage pickup');
+
+CREATE TABLE middleman_pub.task_attribute (
+  attribute TEXT PRIMARY KEY
 );
+
+INSERT INTO middleman_pub.task_attribute (attribute) VALUES
+  ('car make'),
+  ('car model'),
+  ('car year'),
+  ('car license plate'),
+  ('car color'),
+  ('direction notes');
 
 CREATE TABLE middleman_pub.task (
   id BIGSERIAL PRIMARY KEY,
@@ -127,8 +136,8 @@ CREATE TABLE middleman_pub.task (
   latitude REAL NOT NULL,
   scheduled_for TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   geog GEOMETRY,
-  category middleman_pub.task_type NOT NULL,
-  mode middleman_pub.task_mode NOT NULL DEFAULT 'opened',
+  category TEXT NOT NULL REFERENCES middleman_pub.task_type (task_type) ON UPDATE CASCADE,
+  mode TEXT NOT NULL DEFAULT 'opened' REFERENCES middleman_pub.task_mode (mode) ON UPDATE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -150,7 +159,7 @@ COMMENT ON TABLE middleman_pub.task IS
 
 CREATE TABLE middleman_pub.task_detail (
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
-  attribute middleman_pub.task_attribute NOT NULL,
+  attribute TEXT NOT NULL REFERENCES middleman_pub.task_attribute ON UPDATE CASCADE,
   detail TEXT NOT NULL,
   PRIMARY KEY (task_id, attribute),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -345,18 +354,17 @@ COMMENT ON FUNCTION middleman_pub.current_person() IS
 CREATE FUNCTION middleman_pub.tasks(
   latitude REAL,
   longitude REAL,
-  task_types middleman_pub.task_type[],
-  task_status middleman_pub.task_mode DEFAULT 'opened'
+  task_types middleman_pub.task_type.task_type[]
 ) RETURNS SETOF middleman_pub.task as $$
   SELECT *
   FROM middleman_pub.task
-  WHERE middleman_pub.task.mode = task_status
+  WHERE middleman_pub.task.mode = 'opened'
   AND middleman_pub.task.category = ANY (task_types)
   ORDER BY middleman_pub.task.geog <-> concat('SRID=4326;POINT(', longitude, ' ', latitude, ')')
   LIMIT 100;
 $$ LANGUAGE sql stable;
 
-COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) IS
+COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[]) IS
   'Gets the 100 nearest open tasks given longitude latitude and task type ordered by distance';
 
 CREATE FUNCTION middleman_pub.comment_child(
@@ -421,12 +429,12 @@ $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION middleman_pub.remove_comment(BIGINT) IS
   'delete comment by id';
 
-GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[]) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_parent(BIGINT) TO middleman_user, middleman_visitor;
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_child(BIGINT) TO middleman_user, middleman_visitor;
 GRANT EXECUTE ON FUNCTION middleman_pub.remove_comment(BIGINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT, SMALLINT) TO middleman_user;
-GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[]) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT) TO middleman_visitor;
