@@ -83,7 +83,7 @@ CREATE TYPE middleman_pub.task_mode AS ENUM (
 );
 
 CREATE TYPE middleman_pub.task_type AS ENUM (
-  'car air filter change',
+  'car cabin air filter change',
   'car detail',
   'car headlights upgrade',
   'car oil change',
@@ -91,7 +91,6 @@ CREATE TYPE middleman_pub.task_type AS ENUM (
   'car tire replacement',
   'car wash',
   'car windshield wiper',
-  'car battery change',
   'elder bathing',
   'elder cooking',
   'elder shopping',
