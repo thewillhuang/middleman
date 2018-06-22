@@ -13,7 +13,7 @@ async function main() {
   await pool.end();
 }
 
-main().then(null, (e) => {
+main().then(null, e => {
   if (e) {
     console.error(e);
   }

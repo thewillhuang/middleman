@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 
 let cachedPool = null;
 
-export default (PGCONFIG) => {
+export default PGCONFIG => {
   if (cachedPool === null) {
     console.log('initializing a new pool');
     cachedPool = new Pool(PGCONFIG);
