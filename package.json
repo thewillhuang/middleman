@@ -9,7 +9,6 @@
     "postgraphile": "^4.0.0-rc.1"
   },
   "scripts": {
-    "precommit": "lint-staged",
     "start": "yarn clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql,json --exec 'yarn dev'",
     "predev": "yarn db:r",
     "dev": "NODE_ENV=development DEBUG='*:sql' node dist/main.js",
@@ -31,6 +30,11 @@
     "db:up:test": "db-migrate up -e test",
     "db:r": "yarn db:down && yarn db:drop && yarn db:create && yarn db:up",
     "db:down": "db-migrate down"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   },
   "lint-staged": {
     "*.{js,json,css,md}": [
