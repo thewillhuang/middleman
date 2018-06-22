@@ -33,7 +33,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "prettier --single-quote --loglevel silent --trailing-comma es5 --write **/*.js"
+      "pre-commit": "prettier --single-quote --loglevel silent --trailing-comma es5 --write **/*.{js,ts,css,json}"
     }
   },
   "devDependencies": {
