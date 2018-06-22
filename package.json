@@ -31,6 +31,11 @@
     "db:r": "yarn db:down && yarn db:drop && yarn db:create && yarn db:up",
     "db:down": "db-migrate down"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "prettier --single-quote --trailing-comma es5 --write **/*.js"
+    }
+  },
   "devDependencies": {
     "babel-core": "^6.26.3",
     "babel-loader": "^7.1.2",
@@ -54,12 +59,14 @@
     "eslint-plugin-react": "^7.6.1",
     "express": "^4.16.2",
     "faker": "^4.1.0",
+    "husky": "^1.0.0-rc.9",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^22.4.4",
     "jest-raw-loader": "^1.0.1",
     "lodash": "^4.17.5",
     "morgan": "^1.9.0",
     "nodemon": "^1.15.1",
+    "prettier": "1.13.5",
     "ramda": "^0.25.0",
     "raw-loader": "^0.5.1",
     "supertest": "^3.1.0",
