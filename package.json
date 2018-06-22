@@ -9,6 +9,7 @@
     "postgraphile": "^4.0.0-rc.1"
   },
   "scripts": {
+    "precommit": "lint-staged",
     "start": "yarn clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql,json --exec 'yarn dev'",
     "predev": "yarn db:r",
     "dev": "NODE_ENV=development DEBUG='*:sql' node dist/main.js",
@@ -31,10 +32,11 @@
     "db:r": "yarn db:down && yarn db:drop && yarn db:create && yarn db:up",
     "db:down": "db-migrate down"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "prettier --single-quote --loglevel silent --trailing-comma es5 --write **/*.{js,ts,css,json}"
-    }
+  "lint-staged": {
+    "*.{js,json,css,md}": [
+      "prettier --single-quote --trailing-comma es5 --write",
+      "git add"
+    ]
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
@@ -57,6 +59,7 @@
     "identity-obj-proxy": "^3.0.0",
     "jest": "^22.4.4",
     "jest-raw-loader": "^1.0.1",
+    "lint-staged": "^7.2.0",
     "lodash": "^4.17.5",
     "morgan": "^1.9.0",
     "nodemon": "^1.15.1",
