@@ -6,12 +6,12 @@
   "author": "William Huang <will.h86@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "postgraphile": "^4.0.0-rc.1"
+    "postgraphile": "^4.0.0-rc.2"
   },
   "scripts": {
-    "start": "yarn clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql,json --exec 'yarn dev'",
+    "dev": "yarn clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql,json --exec 'yarn build:dev'",
     "predev": "yarn db:r",
-    "dev": "NODE_ENV=development DEBUG='*:sql' node dist/main.js",
+    "build:dev": "NODE_ENV=development DEBUG='*:sql' node dist/main.js",
     "backup": "mv ./node_modules/ ./node_modules_bak/ && mv ./.yarnclean_bak ./.yarnclean",
     "restore": "rm -fr node_modules && mv ./node_modules_bak/ ./node_modules/ &&  mv ./.yarnclean ./.yarnclean_bak",
     "build": "yarn clean && webpack --mode=production && yarn run backup && yarn --ignore-engines --prod",
@@ -37,7 +37,7 @@
     }
   },
   "lint-staged": {
-    "*.{js,json,css,md}": [
+    "*.{js,jsx,json,css,md}": [
       "prettier --single-quote --trailing-comma es5 --write",
       "git add"
     ]
