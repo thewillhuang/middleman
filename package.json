@@ -6,12 +6,12 @@
   "author": "William Huang <will.h86@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "postgraphile": "^4.0.0-rc.2"
+    "postgraphile": "4.0.0-rc.3"
   },
   "scripts": {
-    "dev": "yarn clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql,json --exec 'yarn build:dev'",
-    "predev": "yarn db:r",
-    "build:dev": "NODE_ENV=development DEBUG='*:sql' node dist/main.js",
+    "dev": "yarn clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql,json --exec 'yarn builddev'",
+    "prebuilddev": "yarn db:r",
+    "builddev": "NODE_ENV=development DEBUG='*:sql' node dist/main.js",
     "backup": "mv ./node_modules/ ./node_modules_bak/ && mv ./.yarnclean_bak ./.yarnclean",
     "restore": "rm -fr node_modules && mv ./node_modules_bak/ ./node_modules/ &&  mv ./.yarnclean ./.yarnclean_bak",
     "build": "yarn clean && webpack --mode=production && yarn run backup && yarn --ignore-engines --prod",

@@ -32,7 +32,7 @@ CREATE TRIGGER phone_updated_at BEFORE UPDATE
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.phone IS
-  E'@omit all';
+  E'@omit create,update,delete,filter,all';
 
 CREATE TABLE middleman_pub.person (
   id BIGSERIAL PRIMARY KEY,
@@ -59,7 +59,7 @@ CREATE TRIGGER PERSON_set_geog_column BEFORE INSERT OR UPDATE
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_geog_column();
 
 COMMENT ON TABLE middleman_pub.person IS
-  E'@omit all';
+  E'@omit create,update,delete,filter,all';
 
 CREATE TABLE middleman_pub.photo (
   id BIGSERIAL PRIMARY KEY,
@@ -73,7 +73,7 @@ CREATE TRIGGER photo_updated_at BEFORE UPDATE
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.photo IS
-  E'@omit all';
+  E'@omit create,update,delete,filter,all';
 
 CREATE TYPE middleman_pub.task_mode AS ENUM (
   'scheduled',
@@ -106,7 +106,8 @@ CREATE TYPE middleman_pub.task_type AS ENUM (
   'medical tourism',
   'pet bnb',
   'photoshop',
-  'storage pickup'
+  'storage pickup',
+  'junk dump'
 );
 
 CREATE TYPE middleman_pub.task_attribute AS ENUM (
@@ -145,7 +146,7 @@ CREATE TRIGGER task_set_geog_column BEFORE INSERT OR UPDATE
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_geog_column();
 
 COMMENT ON TABLE middleman_pub.task IS
-  E'@omit all';
+  E'@omit create,update,delete,filter,all';
 
 CREATE TABLE middleman_pub.task_detail (
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
@@ -163,7 +164,7 @@ CREATE TRIGGER task_detail_updated_at BEFORE UPDATE
 CREATE UNIQUE INDEX ON middleman_pub.task_detail (task_id, attribute);
 
 COMMENT ON TABLE middleman_pub.task_detail IS
-  E'@omit all';
+  E'@omit create,update,delete,filter,all';
 
 CREATE TABLE middleman_pub.comment (
   id BIGSERIAL PRIMARY KEY,
@@ -184,7 +185,7 @@ CREATE TRIGGER comment_updated_at BEFORE UPDATE
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.comment IS
-  E'@omit all';
+  E'@omit all,delete';
 
 CREATE TABLE middleman_pub.comment_tree (
   parent_id BIGINT NOT NULL REFERENCES middleman_pub.comment ON UPDATE CASCADE,
@@ -202,7 +203,7 @@ CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.comment_tree IS
-  E'@omit all';
+  E'@omit create,update,delete,filter,all';
 
 ALTER TABLE middleman_pub.comment_tree ADD CONSTRAINT comment_tree_pkey PRIMARY KEY (parent_id, child_id);
 
@@ -220,7 +221,7 @@ CREATE TRIGGER person_type_updated_at BEFORE UPDATE
 CREATE UNIQUE INDEX ON middleman_pub.person_type (person_id, category);
 
 COMMENT ON TABLE middleman_pub.person_type IS
-  E'@omit all';
+  E'@omit create,update,delete,filter,all';
 
 CREATE TABLE middleman_pub.person_photo (
   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
@@ -236,7 +237,7 @@ CREATE TRIGGER person_photo_updated_at BEFORE UPDATE
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.person_photo IS
-  E'@omit all';
+  E'@omit create,update,delete,filter,all';
 
 CREATE TABLE middleman_pub.task_photo (
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
@@ -252,7 +253,7 @@ CREATE TRIGGER task_photo_updated_at BEFORE UPDATE
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.task_photo IS
-  E'@omit all';
+  E'@omit create,update,delete,filter,all';
 
 CREATE TABLE middleman_priv.person_account (
   person_id        BIGINT PRIMARY KEY REFERENCES middleman_pub.person ON UPDATE CASCADE,
@@ -298,7 +299,7 @@ $$ LANGUAGE plpgsql strict security definer;
 COMMENT ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT) IS
   'Registers a single person and creates an account in our forum.';
 
-CREATE ROLE middleman_admin LOGIN PASSWORD 'voodoo3d';
+CREATE ROLE  middleman_admin LOGIN PASSWORD 'voodoo3d';
 CREATE ROLE middleman_visitor;
 CREATE ROLE middleman_user;
 GRANT middleman_visitor TO middleman_admin;
@@ -382,6 +383,7 @@ COMMENT ON FUNCTION middleman_pub.comment_parent(BIGINT) IS
   'get the parents of comment by id';
 
 CREATE FUNCTION middleman_pub.reply_with_comment(
+  task_id BIGINT,
   parent_id BIGINT,
   commentary TEXT,
   stars SMALLINT
@@ -390,8 +392,8 @@ CREATE FUNCTION middleman_pub.reply_with_comment(
   author_id CONSTANT BIGINT := (SELECT id FROM current_person());
   BEGIN
   WITH comment_id AS (
-    INSERT INTO middleman_pub.comment (commentary, person_id, stars)
-    VALUES (commentary, author_id, stars) RETURNING id
+    INSERT INTO middleman_pub.comment (commentary, person_id, task_id, stars)
+    VALUES (commentary, person_id, task_id, stars) RETURNING id
   ) INSERT INTO middleman_pub.comment_tree (parent_id, comment_id, person_id) (
     SELECT t.parent_id, comment_id, person_id
     FROM middleman_pub.comment_tree AS t
@@ -402,7 +404,7 @@ CREATE FUNCTION middleman_pub.reply_with_comment(
   END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT, SMALLINT) IS
+COMMENT ON FUNCTION middleman_pub.reply_with_comment(BIGINT, BIGINT, TEXT, SMALLINT) IS
   'reply comment given parent comment id';
 
 CREATE FUNCTION middleman_pub.remove_comment(
@@ -423,7 +425,7 @@ GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_typ
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_parent(BIGINT) TO middleman_user, middleman_visitor;
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_child(BIGINT) TO middleman_user, middleman_visitor;
 GRANT EXECUTE ON FUNCTION middleman_pub.remove_comment(BIGINT) TO middleman_user;
-GRANT EXECUTE ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT, SMALLINT) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.reply_with_comment(BIGINT, BIGINT, TEXT, SMALLINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
