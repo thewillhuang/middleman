@@ -16,7 +16,9 @@ export const isDevelopment = NODE_ENV === 'development';
 export const isTest = NODE_ENV === 'test';
 export const isProduction = NODE_ENV === 'production';
 
-const params = url.parse(isTest ? `postgresql://williamhuang@db/${DATABASE}` : DB_URL);
+const params = url.parse(
+  isTest ? `postgresql://williamhuang@db/${DATABASE}` : DB_URL
+);
 const auth = params.auth.split(':');
 
 export const APPPORT = PORT;
@@ -42,7 +44,7 @@ export const POSTGRAPHQLCONFIG = {
   watchPg: isDevelopment,
   graphqlRoute: '/',
   enableQueryBatching: true,
-  disableQueryLog: isProduction || isTest,
+  disableQueryLog: true,
   extendedErrors: ['hint', 'detail', 'errcode'],
   jwtSecret: JWT_SECRET,
   jwtPgTypeIdentifier: `${DATABASE}_pub.jwt_token`,
@@ -65,6 +67,9 @@ if (!isDevelopment && !isTest) {
 }
 
 if (!isTest) {
-  POSTGRAPHQLCONFIG.exportGqlSchemaPath = join(__dirname, '../../dist', 'schema.graphql');
+  POSTGRAPHQLCONFIG.exportGqlSchemaPath = join(
+    __dirname,
+    '../../dist',
+    'schema.graphql'
+  );
 }
-

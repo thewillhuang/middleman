@@ -59,7 +59,7 @@ describe('user query', () => {
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `bearer ${jwt}`)
+      .set('Authorization', `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
     expect(body).toHaveProperty(['data', 'currentPerson', 'id']);
@@ -83,7 +83,6 @@ describe('user query', () => {
       .send(payload)
       .expect(200);
     jwt = body.data.authenticate.jwtToken;
-    console.log(body);
     expect(body.data.authenticate.jwtToken).toBe(null);
   });
 });

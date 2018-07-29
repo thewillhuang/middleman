@@ -60,7 +60,7 @@ describe('user query', () => {
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `bearer ${jwt}`)
+      .set('Authorization', `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
     expect(body).toHaveProperty(['data', 'currentPerson', 'id']);
@@ -92,7 +92,7 @@ describe('user query', () => {
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `bearer ${jwt}`)
+      .set('Authorization', `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
     expect(body).toHaveProperty(['data', 'createTask', 'task', 'category']);
@@ -116,7 +116,7 @@ describe('user query', () => {
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `bearer ${jwt}`)
+      .set('Authorization', `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
     totalCount = body.data.tasks.totalCount;
@@ -140,7 +140,7 @@ describe('user query', () => {
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `bearer ${jwt}`)
+      .set('Authorization', `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
     expect(body).toHaveProperty(['data', 'createTask', 'task', 'category']);
@@ -163,7 +163,7 @@ describe('user query', () => {
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `bearer ${jwt}`)
+      .set('Authorization', `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
     expect(body.data.tasks.totalCount).toBeGreaterThan(totalCount);

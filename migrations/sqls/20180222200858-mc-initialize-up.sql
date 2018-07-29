@@ -146,7 +146,7 @@ CREATE TRIGGER task_set_geog_column BEFORE INSERT OR UPDATE
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_geog_column();
 
 COMMENT ON TABLE middleman_pub.task IS
-  E'@omit create,update,delete,filter,all';
+  E'@omit all';
 
 CREATE TABLE middleman_pub.task_detail (
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
@@ -164,7 +164,7 @@ CREATE TRIGGER task_detail_updated_at BEFORE UPDATE
 CREATE UNIQUE INDEX ON middleman_pub.task_detail (task_id, attribute);
 
 COMMENT ON TABLE middleman_pub.task_detail IS
-  E'@omit create,update,delete,filter,all';
+  E'@omit all';
 
 CREATE TABLE middleman_pub.comment (
   id BIGSERIAL PRIMARY KEY,
@@ -426,7 +426,6 @@ GRANT EXECUTE ON FUNCTION middleman_pub.comment_parent(BIGINT) TO middleman_user
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_child(BIGINT) TO middleman_user, middleman_visitor;
 GRANT EXECUTE ON FUNCTION middleman_pub.remove_comment(BIGINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.reply_with_comment(BIGINT, BIGINT, TEXT, SMALLINT) TO middleman_user;
-GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT) TO middleman_visitor;
