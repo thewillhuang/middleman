@@ -383,7 +383,6 @@ COMMENT ON FUNCTION middleman_pub.comment_parent(BIGINT) IS
   'get the parents of comment by id';
 
 CREATE FUNCTION middleman_pub.reply_with_comment(
-  task_id BIGINT,
   parent_id BIGINT,
   commentary TEXT,
   stars SMALLINT
@@ -392,8 +391,8 @@ CREATE FUNCTION middleman_pub.reply_with_comment(
   author_id CONSTANT BIGINT := (SELECT id FROM current_person());
   BEGIN
   WITH comment_id AS (
-    INSERT INTO middleman_pub.comment (commentary, person_id, task_id, stars)
-    VALUES (commentary, person_id, task_id, stars) RETURNING id
+    INSERT INTO middleman_pub.comment (commentary, person_id, stars)
+    VALUES (commentary, author_id, stars) RETURNING id
   ) INSERT INTO middleman_pub.comment_tree (parent_id, comment_id, person_id) (
     SELECT t.parent_id, comment_id, person_id
     FROM middleman_pub.comment_tree AS t
