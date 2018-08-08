@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "yarn clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql,json --exec 'yarn builddev'",
     "prebuilddev": "yarn db:r",
-    "builddev": "NODE_ENV=development DEBUG='*:sql' node dist/main.js",
+    "builddev": "NODE_ENV=development node dist/main.js",
     "backup": "mv ./node_modules/ ./node_modules_bak/ && mv ./.yarnclean_bak ./.yarnclean",
     "restore": "rm -fr node_modules && mv ./node_modules_bak/ ./node_modules/ &&  mv ./.yarnclean ./.yarnclean_bak",
     "build": "yarn clean && webpack --mode=production && yarn run backup && yarn --ignore-engines --prod",

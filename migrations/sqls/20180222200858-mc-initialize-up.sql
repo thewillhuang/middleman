@@ -171,7 +171,7 @@ CREATE TABLE middleman_pub.comment (
   commentary TEXT,
   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
-  stars SMALLINT,
+  stars SMALLINT NOT NULL,
   deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
