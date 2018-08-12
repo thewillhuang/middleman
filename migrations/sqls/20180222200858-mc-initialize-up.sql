@@ -77,10 +77,10 @@ COMMENT ON TABLE middleman_pub.photo IS
 
 CREATE TYPE middleman_pub.task_mode AS ENUM (
   'closed', -- task cancled
-  'opened' -- task requested
+  'opened', -- task requested
   'scheduled', -- task with fulfiller found
   'pending approval', -- finished task awaiting client confirmation
-  'finished', -- finished tasks
+  'finished' -- finished tasks
 );
 
 CREATE TYPE middleman_pub.task_type AS ENUM (
@@ -422,6 +422,7 @@ $$ LANGUAGE plpgsql STRICT SECURITY INVOKER VOLATILE;
 COMMENT ON FUNCTION middleman_pub.remove_comment(BIGINT) IS
   'delete comment by id';
 
+-- permissions
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_parent(BIGINT) TO middleman_user, middleman_visitor;
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_child(BIGINT) TO middleman_user, middleman_visitor;

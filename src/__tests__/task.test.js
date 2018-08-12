@@ -213,4 +213,28 @@ describe('user query', () => {
       .expect(200);
     expect(body).toHaveProperty(['errors']);
   });
+
+  const email2 = faker.internet.email();
+  const password2 = faker.internet.password();
+  const firstName2 = faker.name.firstName();
+  const lastName2 = faker.name.lastName();
+  it('should be able to create a new driver', async () => {
+    const payload = {
+      query: `mutation {
+        registerPerson(input:{
+          firstName:"${firstName2}",
+          lastName:"${lastName2}",
+          email:"${email2}",
+          password:"${password2}",
+          isClient: false
+        }) {
+          clientMutationId
+        }
+      }`,
+    };
+    await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .send(payload)
+      .expect(200);
+  });
 });
