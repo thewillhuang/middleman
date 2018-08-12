@@ -170,8 +170,9 @@ CREATE TABLE middleman_pub.comment (
   id BIGSERIAL PRIMARY KEY,
   commentary TEXT,
   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
+  author_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
-  stars SMALLINT NOT NULL,
+  stars SMALLINT,
   deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -179,6 +180,7 @@ CREATE TABLE middleman_pub.comment (
 
 CREATE INDEX ON middleman_pub.comment (task_id);
 CREATE INDEX ON middleman_pub.comment (person_id);
+CREATE INDEX ON middleman_pub.comment (author_id);
 
 CREATE TRIGGER comment_updated_at BEFORE UPDATE
   ON middleman_pub.comment
@@ -190,13 +192,10 @@ COMMENT ON TABLE middleman_pub.comment IS
 CREATE TABLE middleman_pub.comment_tree (
   parent_id BIGINT NOT NULL REFERENCES middleman_pub.comment ON UPDATE CASCADE,
   child_id BIGINT NOT NULL REFERENCES middleman_pub.comment ON UPDATE CASCADE,
-  person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
   depth SMALLINT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX ON middleman_pub.comment_tree (person_id);
 
 CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
   ON middleman_pub.comment_tree
@@ -356,7 +355,7 @@ CREATE FUNCTION middleman_pub.tasks(
 $$ LANGUAGE sql stable;
 
 COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) IS
-  'Gets the 100 nearest open tasks given longitude latitude and task type ordered by distance';
+  'Gets the nearest open tasks given longitude latitude and task type ordered by distance';
 
 CREATE FUNCTION middleman_pub.comment_child(
   id BIGINT
@@ -368,7 +367,7 @@ CREATE FUNCTION middleman_pub.comment_child(
 $$ LANGUAGE sql stable;
 
 COMMENT ON FUNCTION middleman_pub.comment_child(BIGINT) IS
-  'get the childs of comment by id';
+  'get the childs of comment by comment id';
 
 CREATE FUNCTION middleman_pub.comment_parent(
   id BIGINT
@@ -380,7 +379,7 @@ CREATE FUNCTION middleman_pub.comment_parent(
 $$ LANGUAGE sql stable;
 
 COMMENT ON FUNCTION middleman_pub.comment_parent(BIGINT) IS
-  'get the parents of comment by id';
+  'get the parents of comment by comment id';
 
 CREATE FUNCTION middleman_pub.reply_with_comment(
   parent_id BIGINT,
@@ -389,17 +388,19 @@ CREATE FUNCTION middleman_pub.reply_with_comment(
 ) RETURNS void as $$
   DECLARE
   author_id CONSTANT BIGINT := (SELECT id FROM current_person());
+  person_id CONSTANT BIGINT := (SELECT person_id FROM middleman_pub.comment WHERE id = parent_id);
+  task_id CONSTANT BIGINT := (SELECT task_id FROM middleman_pub.comment WHERE id = parent_id);
   BEGIN
-  WITH comment_id AS (
-    INSERT INTO middleman_pub.comment (commentary, person_id, stars)
-    VALUES (commentary, author_id, stars) RETURNING id
-  ) INSERT INTO middleman_pub.comment_tree (parent_id, comment_id, person_id) (
-    SELECT t.parent_id, comment_id, person_id
-    FROM middleman_pub.comment_tree AS t
-    WHERE t.child_id = parent_id
-    UNION ALL
-      (SELECT comment_id, comment_id, author_id)
-  );
+    WITH comment_id AS (
+      INSERT INTO middleman_pub.comment (commentary, author_id, stars, person_id, task_id)
+      VALUES (commentary, author_id, stars, person_id, task_id) RETURNING id
+    )
+    INSERT INTO middleman_pub.comment_tree (parent_id, child_id) (
+      SELECT t.parent_id, comment_id
+      FROM middleman_pub.comment_tree AS t
+      WHERE t.child_id = parent_id
+      UNION ALL (SELECT comment_id, comment_id)
+    );
   END;
 $$ LANGUAGE plpgsql;
 
@@ -481,15 +482,6 @@ CREATE POLICY update_comment ON middleman_pub.comment FOR UPDATE TO middleman_us
 CREATE POLICY delete_comment ON middleman_pub.comment FOR DELETE TO middleman_user
   USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
 
-ALTER TABLE middleman_pub.comment_tree ENABLE ROW LEVEL SECURITY;
-CREATE POLICY select_comment_tree ON middleman_pub.comment_tree FOR SELECT TO middleman_user, middleman_visitor
-  USING (true);
-CREATE POLICY insert_comment_tree ON middleman_pub.comment_tree FOR INSERT TO middleman_user
-  WITH CHECK (person_id = current_setting('jwt.claims.person_id')::INTEGER);
-CREATE POLICY update_comment_tree ON middleman_pub.comment_tree FOR UPDATE TO middleman_user
-  USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
-CREATE POLICY delete_comment_tree ON middleman_pub.comment_tree FOR DELETE TO middleman_user
-  USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
 
 ALTER TABLE middleman_pub.person ENABLE ROW LEVEL SECURITY;
 CREATE POLICY select_person ON middleman_pub.person FOR SELECT TO middleman_user, middleman_visitor
