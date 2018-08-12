@@ -383,8 +383,7 @@ COMMENT ON FUNCTION middleman_pub.comment_parent(BIGINT) IS
 
 CREATE FUNCTION middleman_pub.reply_with_comment(
   parent_id BIGINT,
-  commentary TEXT,
-  stars SMALLINT
+  commentary TEXT
 ) RETURNS void as $$
   DECLARE
   author_id CONSTANT BIGINT := (SELECT id FROM current_person());
@@ -392,8 +391,8 @@ CREATE FUNCTION middleman_pub.reply_with_comment(
   task_id CONSTANT BIGINT := (SELECT task_id FROM middleman_pub.comment WHERE id = parent_id);
   BEGIN
     WITH comment_id AS (
-      INSERT INTO middleman_pub.comment (commentary, author_id, stars, person_id, task_id)
-      VALUES (commentary, author_id, stars, person_id, task_id) RETURNING id
+      INSERT INTO middleman_pub.comment (commentary, author_id, person_id, task_id)
+      VALUES (commentary, author_id, person_id, task_id) RETURNING id
     )
     INSERT INTO middleman_pub.comment_tree (parent_id, child_id) (
       SELECT t.parent_id, comment_id
@@ -404,7 +403,7 @@ CREATE FUNCTION middleman_pub.reply_with_comment(
   END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT, SMALLINT) IS
+COMMENT ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT) IS
   'reply comment given parent comment id';
 
 CREATE FUNCTION middleman_pub.remove_comment(
@@ -425,7 +424,7 @@ GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_typ
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_parent(BIGINT) TO middleman_user, middleman_visitor;
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_child(BIGINT) TO middleman_user, middleman_visitor;
 GRANT EXECUTE ON FUNCTION middleman_pub.remove_comment(BIGINT) TO middleman_user;
-GRANT EXECUTE ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT, SMALLINT) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT) TO middleman_visitor;
