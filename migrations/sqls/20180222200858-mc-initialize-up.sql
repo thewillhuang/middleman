@@ -487,5 +487,21 @@ CREATE POLICY select_person ON middleman_pub.person FOR SELECT TO middleman_user
   USING (true);
 CREATE POLICY update_person ON middleman_pub.person FOR UPDATE TO middleman_user
   USING (id = current_setting('jwt.claims.person_id')::INTEGER);
-CREATE POLICY delete_person ON middleman_pub.person FOR delete TO middleman_user
+CREATE POLICY delete_person ON middleman_pub.person FOR DELETE TO middleman_user
   USING (id = current_setting('jwt.claims.person_id')::INTEGER);
+
+ALTER TABLE middleman_pub.task ENABLE ROW LEVEL SECURITY;
+CREATE POLICY select_task ON middleman_pub.task FOR SELECT TO middleman_user, middleman_visitor
+  USING (true);
+CREATE POLICY insert_task ON middleman_pub.task FOR INSERT TO middleman_user
+  WITH CHECK (
+    (requestor_id = current_setting('jwt.claims.person_id')::INTEGER) OR
+    ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = false)
+  );
+CREATE POLICY update_task ON middleman_pub.task FOR UPDATE TO middleman_user
+    WITH CHECK (
+    (requestor_id = current_setting('jwt.claims.person_id')::INTEGER) OR
+    ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = false)
+  );
+CREATE POLICY delete_task ON middleman_pub.task FOR DELETE TO middleman_user
+  USING (false);
