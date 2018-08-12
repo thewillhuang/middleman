@@ -279,13 +279,14 @@ CREATE FUNCTION middleman_pub.register_person(
   first_name TEXT,
   last_name TEXT,
   email TEXT,
-  password TEXT
+  password TEXT,
+  is_client BOOLEAN
 ) RETURNS middleman_pub.person AS $$
 declare
   person middleman_pub.person;
 BEGIN
-  INSERT INTO middleman_pub.person (first_name, last_name) VALUES
-    (first_name, last_name)
+  INSERT INTO middleman_pub.person (first_name, last_name, is_client) VALUES
+    (first_name, last_name, is_client)
     RETURNING * INTO person;
 
   INSERT INTO middleman_priv.person_account (person_id, email, password_hash) VALUES
@@ -295,7 +296,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql strict security definer;
 
-COMMENT ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT) IS
+COMMENT ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT, BOOLEAN) IS
   'Registers a single person and creates an account in our forum.';
 
 CREATE ROLE  middleman_admin LOGIN PASSWORD 'voodoo3d';
@@ -427,7 +428,7 @@ GRANT EXECUTE ON FUNCTION middleman_pub.remove_comment(BIGINT) TO middleman_user
 GRANT EXECUTE ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
-GRANT EXECUTE ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT) TO middleman_visitor;
+GRANT EXECUTE ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT, BOOLEAN) TO middleman_visitor;
 
 GRANT USAGE ON SEQUENCE middleman_pub.comment_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.person_id_seq TO middleman_user;
@@ -480,7 +481,6 @@ CREATE POLICY update_comment ON middleman_pub.comment FOR UPDATE TO middleman_us
   USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
 CREATE POLICY delete_comment ON middleman_pub.comment FOR DELETE TO middleman_user
   USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
-
 
 ALTER TABLE middleman_pub.person ENABLE ROW LEVEL SECURITY;
 CREATE POLICY select_person ON middleman_pub.person FOR SELECT TO middleman_user, middleman_visitor

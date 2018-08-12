@@ -8,6 +8,7 @@ describe('user query', () => {
   const password = faker.internet.password();
   const firstName = faker.name.firstName();
   const lastName = faker.name.lastName();
+
   it('should be able to create a new user', async () => {
     const payload = {
       query: `mutation {
@@ -16,6 +17,7 @@ describe('user query', () => {
           lastName:"${lastName}",
           email:"${email}",
           password:"${password}",
+          isClient: true
         }) {
           clientMutationId
         }
@@ -213,24 +215,49 @@ describe('user query', () => {
     expect(body).toHaveProperty(['errors']);
   });
 
-  it('should allow users to add comment', async () => {
+  const email2 = faker.internet.email();
+  const password2 = faker.internet.password();
+  const firstName2 = faker.name.firstName();
+  const lastName2 = faker.name.lastName();
+  it('should be able to create a new driver', async () => {
     const payload = {
-      query: `query {
-        tasks(longitude:${longitude}, latitude: ${latitude}, taskTypes:[${category}]) {
-          edges {
-            node {
-              id
-              category
-            }
-          },
-          totalCount
+      query: `mutation {
+        registerPerson(input:{
+          firstName:"${firstName2}",
+          lastName:"${lastName2}",
+          email:"${email2}",
+          password:"${password2}",
+          isClient: false
+        }) {
+          clientMutationId
         }
       }`,
     };
-    const { body } = await request(app)
+    await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
-    expect(body).toHaveProperty(['errors']);
   });
+
+  // it('should allow users to add comment in regards to a task', async () => {
+  //   const payload = {
+  //     query: `query {
+  //       tasks(longitude:${longitude}, latitude: ${latitude}, taskTypes:[${category}]) {
+  //         edges {
+  //           node {
+  //             id
+  //             category
+  //           }
+  //         },
+  //         totalCount
+  //       }
+  //     }`,
+  //   };
+  //   const { body } = await request(app)
+  //     .post(POSTGRAPHQLCONFIG.graphqlRoute)
+  //     .set('Authorization', `Bearer ${jwt}`)
+  //     .send(payload)
+  //     .expect(200);
+  //   expect(body.data.tasks.totalCount).toBeGreaterThan(totalCount);
+  // });
 });

@@ -16,6 +16,7 @@ describe('user query', () => {
           lastName:"${lastName}",
           email:"${email}",
           password:"${password}",
+          isClient: true
         }) {
           clientMutationId
         }
