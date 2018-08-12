@@ -327,7 +327,7 @@ BEGIN
     RETURN NULL;
   END IF;
 END;
-$$ LANGUAGE plpgsql strict security definer;
+$$ LANGUAGE plpgsql STRICT SECURITY DEFINER;
 
 COMMENT ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) IS
   'Creates a JWT token that will securely identify a person and give them certain permissions.';
@@ -352,7 +352,7 @@ CREATE FUNCTION middleman_pub.tasks(
   WHERE middleman_pub.task.mode = task_status
   AND middleman_pub.task.category = ANY (task_types)
   ORDER BY middleman_pub.task.geog <-> concat('SRID=4326;POINT(', longitude, ' ', latitude, ')');
-$$ LANGUAGE sql stable;
+$$ LANGUAGE sql STRICT stable;
 
 COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) IS
   'Gets the nearest open tasks given longitude latitude and task type ordered by distance';
@@ -364,7 +364,7 @@ CREATE FUNCTION middleman_pub.comment_child(
     FROM middleman_pub.comment AS c
       JOIN middleman_pub.comment_tree AS t ON c.id = t.child_id
     WHERE t.parent_id = id;
-$$ LANGUAGE sql stable;
+$$ LANGUAGE sql STRICT stable;
 
 COMMENT ON FUNCTION middleman_pub.comment_child(BIGINT) IS
   'get the childs of comment by comment id';
@@ -376,7 +376,7 @@ CREATE FUNCTION middleman_pub.comment_parent(
   FROM middleman_pub.comment AS c
     JOIN middleman_pub.comment_tree AS t ON c.id = t.parent_id
   WHERE t.child_id = id;
-$$ LANGUAGE sql stable;
+$$ LANGUAGE sql STRICT stable;
 
 COMMENT ON FUNCTION middleman_pub.comment_parent(BIGINT) IS
   'get the parents of comment by comment id';
@@ -401,7 +401,7 @@ CREATE FUNCTION middleman_pub.reply_with_comment(
       UNION ALL (SELECT comment_id, comment_id)
     );
   END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STRICT SECURITY INVOKER VOLATILE;
 
 COMMENT ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT) IS
   'reply comment given parent comment id';
@@ -415,7 +415,7 @@ CREATE FUNCTION middleman_pub.remove_comment(
     WHERE id = comment_id
     RETURNING *;
   END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STRICT SECURITY INVOKER VOLATILE;
 
 COMMENT ON FUNCTION middleman_pub.remove_comment(BIGINT) IS
   'delete comment by id';
