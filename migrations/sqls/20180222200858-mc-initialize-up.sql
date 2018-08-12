@@ -76,10 +76,11 @@ COMMENT ON TABLE middleman_pub.photo IS
   E'@omit create,update,delete,filter,all';
 
 CREATE TYPE middleman_pub.task_mode AS ENUM (
-  'scheduled',
-  'closed',
-  'finished',
-  'opened'
+  'closed', -- task cancled
+  'opened' -- task requested
+  'scheduled', -- task with fulfiller found
+  'pending approval', -- finished task awaiting client confirmation
+  'finished', -- finished tasks
 );
 
 CREATE TYPE middleman_pub.task_type AS ENUM (
