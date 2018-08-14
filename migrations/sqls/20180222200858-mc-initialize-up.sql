@@ -95,6 +95,7 @@ CREATE TYPE middleman_pub.task_type AS ENUM (
   'elder bathing',
   'elder cooking',
   'elder shopping',
+  'elder transportation',
   'home appliance fixing',
   'home cleaning',
   'home pest control',
@@ -147,7 +148,7 @@ CREATE TRIGGER task_set_geog_column BEFORE INSERT OR UPDATE
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_geog_column();
 
 COMMENT ON TABLE middleman_pub.task IS
-  E'@omit all';
+  E'@omit all,delete';
 
 CREATE TABLE middleman_pub.task_detail (
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
@@ -329,7 +330,7 @@ BEGIN
     RETURN NULL;
   END IF;
 END;
-$$ LANGUAGE plpgsql STRICT SECURITY DEFINER;
+$$ LANGUAGE plpgsql STRICT STABLE SECURITY DEFINER;
 
 COMMENT ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) IS
   'Creates a JWT token that will securely identify a person and give them certain permissions.';
@@ -354,7 +355,7 @@ CREATE FUNCTION middleman_pub.tasks(
   WHERE middleman_pub.task.mode = task_status
   AND middleman_pub.task.category = ANY (task_types)
   ORDER BY middleman_pub.task.geog <-> concat('SRID=4326;POINT(', longitude, ' ', latitude, ')');
-$$ LANGUAGE sql STRICT stable;
+$$ LANGUAGE sql STRICT STABLE;
 
 COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) IS
   'Gets the nearest open tasks given longitude latitude and task type ordered by distance';
@@ -366,7 +367,7 @@ CREATE FUNCTION middleman_pub.comment_child(
     FROM middleman_pub.comment AS c
       JOIN middleman_pub.comment_tree AS t ON c.id = t.child_id
     WHERE t.parent_id = id;
-$$ LANGUAGE sql STRICT stable;
+$$ LANGUAGE sql STRICT STABLE;
 
 COMMENT ON FUNCTION middleman_pub.comment_child(BIGINT) IS
   'get the childs of comment by comment id';
@@ -378,7 +379,7 @@ CREATE FUNCTION middleman_pub.comment_parent(
   FROM middleman_pub.comment AS c
     JOIN middleman_pub.comment_tree AS t ON c.id = t.parent_id
   WHERE t.child_id = id;
-$$ LANGUAGE sql STRICT stable;
+$$ LANGUAGE sql STRICT STABLE;
 
 COMMENT ON FUNCTION middleman_pub.comment_parent(BIGINT) IS
   'get the parents of comment by comment id';
@@ -498,12 +499,17 @@ CREATE POLICY select_task ON middleman_pub.task FOR SELECT TO middleman_user, mi
 CREATE POLICY insert_task ON middleman_pub.task FOR INSERT TO middleman_user
   WITH CHECK (
     (requestor_id = current_setting('jwt.claims.person_id')::INTEGER) OR
-    ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = false)
+    ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = false AND
+     (mode = 'opened')
+    )
   );
 CREATE POLICY update_task ON middleman_pub.task FOR UPDATE TO middleman_user
-    WITH CHECK (
+  WITH CHECK (
     (requestor_id = current_setting('jwt.claims.person_id')::INTEGER) OR
-    ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = false)
+    (
+      (SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = false AND
+      (mode = 'opened')
+    )
   );
 CREATE POLICY delete_task ON middleman_pub.task FOR DELETE TO middleman_user
   USING (false);

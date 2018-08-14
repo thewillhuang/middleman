@@ -31,21 +31,19 @@ describe('user query', () => {
   let jwt;
   it('should be able to get a jwt from email and password', async () => {
     const payload = {
-      query: `mutation {
-        authenticate(input:{
+      query: `query {
+        authenticate(
           email:"${email}",
           password:"${password}",
-        }) {
-          jwtToken
-        }
+        )
       }`,
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
-    jwt = body.data.authenticate.jwtToken;
-    expect(body).toHaveProperty(['data', 'authenticate', 'jwtToken']);
+    jwt = body.data.authenticate;
+    expect(body).toHaveProperty(['data', 'authenticate']);
   });
 
   it('should be able to find self using jwt', async () => {
@@ -70,20 +68,18 @@ describe('user query', () => {
 
   it('reject wrong email or password', async () => {
     const payload = {
-      query: `mutation {
-        authenticate(input:{
+      query: `query {
+        authenticate(
           email:"${faker.internet.email()}",
           password:"${faker.internet.password()}",
-        }) {
-          jwtToken
-        }
+        )
       }`,
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
-    jwt = body.data.authenticate.jwtToken;
-    expect(body.data.authenticate.jwtToken).toBe(null);
+    jwt = body.data.authenticate;
+    expect(body.data.authenticate).toBe(null);
   });
 });

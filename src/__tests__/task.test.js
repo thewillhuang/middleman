@@ -31,21 +31,19 @@ describe('user query', () => {
   let jwt;
   it('should be able to get a jwt from email and password', async () => {
     const payload = {
-      query: `mutation {
-        authenticate(input:{
+      query: `query {
+        authenticate(
           email:"${email}",
           password:"${password}",
-        }) {
-          jwtToken
-        }
+        )
       }`,
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
-    jwt = body.data.authenticate.jwtToken;
-    expect(body).toHaveProperty(['data', 'authenticate', 'jwtToken']);
+    jwt = body.data.authenticate;
+    expect(body).toHaveProperty(['data', 'authenticate']);
   });
 
   let id;
@@ -218,7 +216,7 @@ describe('user query', () => {
   const password2 = faker.internet.password();
   const firstName2 = faker.name.firstName();
   const lastName2 = faker.name.lastName();
-  it('should be able to create a new driver', async () => {
+  it('should be able to create a new driver for permission testing', async () => {
     const payload = {
       query: `mutation {
         registerPerson(input:{
@@ -237,4 +235,49 @@ describe('user query', () => {
       .send(payload)
       .expect(200);
   });
+
+  const driverEmail = faker.internet.email();
+  const driverPassword = faker.internet.password();
+  const driverFirstName = faker.name.firstName();
+  const driverLastName = faker.name.lastName();
+  it('should be able to create a new driver', async () => {
+    const payload = {
+      query: `mutation {
+        registerPerson(input:{
+          firstName:"${driverFirstName}",
+          lastName:"${driverLastName}",
+          email:"${driverEmail}",
+          password:"${driverPassword}",
+          isClient: false
+        }) {
+          clientMutationId
+        }
+      }`,
+    };
+    await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .send(payload)
+      .expect(200);
+  });
+
+  it('driver should be able to accept jobs', async () => {
+    const payload = {
+      query: `mutation {
+        registerPerson(input:{
+          firstName:"${firstName2}",
+          lastName:"${lastName2}",
+          email:"${email2}",
+          password:"${password2}",
+          isClient: false
+        }) {
+          clientMutationId
+        }
+      }`,
+    };
+  });
+  it('driver should be able to mark job as completed');
+  it('client should be able to mark job as finished');
+  it(
+    'client that was not the creater should not be able to mark job as finished'
+  );
 });
