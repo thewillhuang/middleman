@@ -75,7 +75,7 @@ CREATE TRIGGER photo_updated_at BEFORE UPDATE
 COMMENT ON TABLE middleman_pub.photo IS
   E'@omit create,update,delete,filter,all';
 
-CREATE TYPE middleman_pub.task_mode AS ENUM (
+CREATE TYPE middleman_pub.task_status AS ENUM (
   'closed', -- task cancled
   'opened', -- task requested
   'scheduled', -- task with fulfiller found
@@ -114,7 +114,7 @@ CREATE TYPE middleman_pub.task_type AS ENUM (
 
 CREATE TYPE middleman_pub.task_attribute AS ENUM (
   'car make',
-  'car model',
+  'car statusl',
   'car year',
   'car license plate',
   'car color',
@@ -130,14 +130,12 @@ CREATE TABLE middleman_pub.task (
   scheduled_for TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   geog GEOMETRY,
   category middleman_pub.task_type NOT NULL,
-  mode middleman_pub.task_mode NOT NULL DEFAULT 'opened',
+  status middleman_pub.task_status NOT NULL DEFAULT 'opened',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX ON middleman_pub.task USING GIST (geog);
-CREATE INDEX ON middleman_pub.task (mode);
-CREATE INDEX ON middleman_pub.task (category);
 
 CREATE TRIGGER task_updated_at BEFORE UPDATE
   ON middleman_pub.task
@@ -148,7 +146,7 @@ CREATE TRIGGER task_set_geog_column BEFORE INSERT OR UPDATE
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_geog_column();
 
 COMMENT ON TABLE middleman_pub.task IS
-  E'@omit all,delete';
+  E'@omit all, delete';
 
 CREATE TABLE middleman_pub.task_detail (
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
@@ -348,16 +346,16 @@ CREATE FUNCTION middleman_pub.tasks(
   latitude REAL,
   longitude REAL,
   task_types middleman_pub.task_type[],
-  task_status middleman_pub.task_mode DEFAULT 'opened'
+  task_status middleman_pub.task_status DEFAULT 'opened'
 ) RETURNS SETOF middleman_pub.task as $$
   SELECT *
   FROM middleman_pub.task
-  WHERE middleman_pub.task.mode = task_status
+  WHERE middleman_pub.task.status = task_status
   AND middleman_pub.task.category = ANY (task_types)
   ORDER BY middleman_pub.task.geog <-> concat('SRID=4326;POINT(', longitude, ' ', latitude, ')');
 $$ LANGUAGE sql STRICT STABLE;
 
-COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) IS
+COMMENT ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_status) IS
   'Gets the nearest open tasks given longitude latitude and task type ordered by distance';
 
 CREATE FUNCTION middleman_pub.comment_child(
@@ -424,7 +422,7 @@ COMMENT ON FUNCTION middleman_pub.remove_comment(BIGINT) IS
   'delete comment by id';
 
 -- permissions
-GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_mode) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_status) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_parent(BIGINT) TO middleman_user, middleman_visitor;
 GRANT EXECUTE ON FUNCTION middleman_pub.comment_child(BIGINT) TO middleman_user, middleman_visitor;
 GRANT EXECUTE ON FUNCTION middleman_pub.remove_comment(BIGINT) TO middleman_user;
@@ -478,7 +476,7 @@ CREATE POLICY select_comment ON middleman_pub.comment FOR SELECT TO middleman_us
 CREATE POLICY insert_comment ON middleman_pub.comment FOR INSERT TO middleman_user
   WITH CHECK (
     (person_id = current_setting('jwt.claims.person_id')::INTEGER) AND
-    ((SELECT mode FROM middleman_pub.task WHERE id = task_id) = 'finished')
+    ((SELECT status FROM middleman_pub.task WHERE id = task_id) = 'finished')
   );
 CREATE POLICY update_comment ON middleman_pub.comment FOR UPDATE TO middleman_user
   USING (person_id = current_setting('jwt.claims.person_id')::INTEGER);
@@ -497,19 +495,18 @@ ALTER TABLE middleman_pub.task ENABLE ROW LEVEL SECURITY;
 CREATE POLICY select_task ON middleman_pub.task FOR SELECT TO middleman_user, middleman_visitor
   USING (true);
 CREATE POLICY insert_task ON middleman_pub.task FOR INSERT TO middleman_user
-  WITH CHECK (
-    (requestor_id = current_setting('jwt.claims.person_id')::INTEGER) OR
-    ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = false AND
-     (mode = 'opened')
-    )
-  );
+  WITH CHECK (requestor_id = current_setting('jwt.claims.person_id')::INTEGER);
 CREATE POLICY update_task ON middleman_pub.task FOR UPDATE TO middleman_user
-  WITH CHECK (
-    (requestor_id = current_setting('jwt.claims.person_id')::INTEGER) OR
+  USING (
+    -- a client or current driver
+    requestor_id = current_setting('jwt.claims.person_id')::INTEGER OR
+    fulfiller_id = current_setting('jwt.claims.person_id')::INTEGER OR
+    -- a driver and opened status
     (
-      (SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = false AND
-      (mode = 'opened')
+      ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = FALSE) AND
+      (status::middleman_pub.task_status = 'opened'::middleman_pub.task_status)
     )
   );
 CREATE POLICY delete_task ON middleman_pub.task FOR DELETE TO middleman_user
   USING (false);
+
