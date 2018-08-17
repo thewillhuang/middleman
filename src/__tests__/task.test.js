@@ -322,10 +322,10 @@ describe('user query', () => {
       .expect(200);
     expect(body).toHaveProperty(['data', 'currentPerson', 'id']);
     expect(body).toHaveProperty(['data', 'currentPerson', 'isClient']);
-    driverId = body.data.currentPerson.id;
     expect(body.data.currentPerson.firstName).toEqual(driverFirstName);
     expect(body.data.currentPerson.lastName).toEqual(driverLastName);
     expect(body.data.currentPerson.isClient).toEqual(false);
+    driverId = body.data.currentPerson.id;
   });
 
   it('driver should be able to see tasks', async () => {
@@ -336,6 +336,8 @@ describe('user query', () => {
             node {
               id
               category
+              nodeId
+              status
             }
           },
           totalCount
@@ -344,9 +346,10 @@ describe('user query', () => {
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${jwt}`)
+      .set('Authorization', `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
+    // console.log({ body: JSON.stringify(body), driverJwt });
     expect(body.data.tasks.totalCount).toBeGreaterThan(totalCount);
   });
 
@@ -399,7 +402,7 @@ describe('user query', () => {
       .expect(200);
     expect(body).toHaveProperty(['data', 'updateTask', 'task', 'id']);
     expect(body).toHaveProperty(['data', 'updateTask', 'task', 'status']);
-    console.log({ status: body.data.updateTask.task.status });
+    // console.log({ status: body.data.updateTask.task.status });
   });
 
   it('driver should not be able to mark a closed job (task1) as taken', async () => {
@@ -427,7 +430,7 @@ describe('user query', () => {
     expect(body).toHaveProperty(['errors']);
   });
 
-  it('driver should be able to mark task2 as taken', async () => {
+  it('open driver should be able to mark task2 as taken', async () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
@@ -443,6 +446,8 @@ describe('user query', () => {
         }
       }`,
     };
+
+    // console.log({ payload });
 
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)

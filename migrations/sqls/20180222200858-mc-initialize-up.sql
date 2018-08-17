@@ -121,6 +121,47 @@ CREATE TYPE middleman_pub.task_attribute AS ENUM (
   'direction notes'
 );
 
+CREATE TYPE middleman_pub.user_type AS ENUM (
+  'fulfiller',
+  'requester',
+  'open driver',
+  'none'
+);
+
+CREATE TABLE middleman_pub.task_permission (
+  status middleman_pub.task_status NOT NULL,
+  user_type middleman_pub.user_type NOT NULL,
+  can_update BOOLEAN NOT NULL
+);
+
+CREATE UNIQUE INDEX ON middleman_pub.task_permission (status, user_type);
+
+
+COMMENT ON TABLE middleman_pub.task_permission IS
+  E'@omit';
+
+INSERT INTO middleman_pub.task_permission (status, user_type, can_update) VALUES
+  ('opened', 'requester', true),
+  ('opened', 'fulfiller', false),
+  ('opened', 'open driver', true),
+  ('opened', 'none', false),
+  ('closed', 'requester', false),
+  ('closed', 'fulfiller', false),
+  ('closed', 'open driver', false),
+  ('closed', 'none', false),
+  ('scheduled', 'requester', false),
+  ('scheduled', 'fulfiller', false),
+  ('scheduled', 'open driver', false),
+  ('scheduled', 'none', false),
+  ('pending approval', 'requester', true),
+  ('pending approval', 'fulfiller', false),
+  ('pending approval', 'open driver', false),
+  ('pending approval', 'none', false),
+  ('finished', 'requester', false),
+  ('finished', 'fulfiller', false),
+  ('finished', 'open driver', false),
+  ('finished', 'none', false);
+
 CREATE TABLE middleman_pub.task (
   id BIGSERIAL PRIMARY KEY,
   requestor_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
@@ -447,6 +488,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.comment_tree TO midd
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_photo TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_type TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_photo TO middleman_admin;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_permission TO middleman_admin;
 
 GRANT SELECT ON TABLE middleman_pub.person TO middleman_visitor, middleman_user;
 GRANT SELECT ON TABLE middleman_pub.comment TO middleman_user, middleman_visitor;
@@ -458,6 +500,7 @@ GRANT SELECT ON TABLE middleman_pub.task_detail TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.person_photo TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.person_type TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.task_photo TO middleman_user;
+GRANT SELECT ON TABLE middleman_pub.task_permission TO middleman_user;
 
 GRANT UPDATE, DELETE ON TABLE middleman_pub.person TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.comment TO middleman_user;
@@ -497,6 +540,21 @@ CREATE POLICY select_task ON middleman_pub.task FOR SELECT TO middleman_user, mi
 CREATE POLICY insert_task ON middleman_pub.task FOR INSERT TO middleman_user
   WITH CHECK ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = TRUE);
 CREATE POLICY update_task ON middleman_pub.task FOR UPDATE TO middleman_user
+  -- using checks current data
+  -- USING ((
+  --   SELECT can_update
+  --   FROM middleman_pub.task_permission
+  --     WHERE status = status
+  --     AND user_type = (
+  --       SELECT CASE
+  --         WHEN (fulfiller_id = current_setting('jwt.claims.person_id')::INTEGER) THEN 'fulfiller'
+  --         WHEN (requestor_id = current_setting('jwt.claims.person_id')::INTEGER) THEN 'requester'
+  --         WHEN (SELECT (SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER LIMIT 1) = FALSE) THEN 'open driver'
+  --         ELSE 'none'
+  --       END
+  --     )::middleman_pub.user_type
+  --   LIMIT 1
+  -- )) WITH CHECK (TRUE);
   USING (
     -- a client or current driver
     requestor_id = current_setting('jwt.claims.person_id')::INTEGER OR
@@ -508,6 +566,7 @@ CREATE POLICY update_task ON middleman_pub.task FOR UPDATE TO middleman_user
     )
       -- ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = FALSE)
   );
+
 CREATE POLICY delete_task ON middleman_pub.task FOR DELETE TO middleman_user
   USING (false);
 
