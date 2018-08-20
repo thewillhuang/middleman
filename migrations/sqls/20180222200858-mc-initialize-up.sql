@@ -79,7 +79,7 @@ CREATE TYPE middleman_pub.task_status AS ENUM (
   'closed', -- task cancled
   'opened', -- task requested
   'scheduled', -- task with fulfiller found
-  'pending approval', -- finished task awaiting client confirmation
+  'pending', -- finished task awaiting client confirmation
   'finished' -- finished tasks
 );
 
@@ -142,8 +142,8 @@ COMMENT ON TABLE middleman_pub.task_permission IS
 INSERT INTO middleman_pub.task_permission (current_status, user_type, can_update, can_update_to) VALUES
   ('opened', 'requester', true, 'closed'),
   ('opened', 'open fulfiller', true, 'scheduled'),
-  ('scheduled', 'fulfiller', true, 'pending approval'),
-  ('pending approval', 'requester', true, 'finished');
+  ('scheduled', 'fulfiller', true, 'pending'),
+  ('pending', 'requester', true, 'finished');
 
 CREATE TABLE middleman_pub.task (
   id BIGSERIAL PRIMARY KEY,
@@ -533,29 +533,30 @@ CREATE POLICY update_task ON middleman_pub.task FOR UPDATE TO middleman_user
         SELECT CASE
           WHEN (requestor_id = current_setting('jwt.claims.person_id')::INTEGER) THEN 'requester'
           WHEN (fulfiller_id = current_setting('jwt.claims.person_id')::INTEGER) THEN 'fulfiller'
-          WHEN (SELECT (SELECT count(*) from middleman_pub.task AS t where t.fulfiller_id = current_setting('jwt.claims.person_id')::INTEGER AND t.status != 'finished') = 0) THEN 'open fulfiller'
+          WHEN (SELECT (SELECT count(*) FROM middleman_pub.task AS t WHERE t.fulfiller_id = current_setting('jwt.claims.person_id')::INTEGER AND t.status != 'finished') = 0) THEN 'open fulfiller'
           ELSE 'none'
         END
       )::middleman_pub.user_type
     LIMIT 1
   -- USING ((TRUE
   --   )) WITH CHECK (TRUE);
-  )) WITH CHECK ((
-    SELECT
+  )) WITH CHECK (
+    (SELECT
       (SELECT can_update_to
         FROM middleman_pub.task_permission
-          WHERE current_status = (SELECT status from middleman_pub.task WHERE id = id LIMIT 1)
+          WHERE current_status = (SELECT status FROM middleman_pub.task WHERE id = id LIMIT 1)
           AND user_type = (
             SELECT CASE
-              WHEN ((SELECT requestor_id from middleman_pub.task WHERE id = id LIMIT 1) = current_setting('jwt.claims.person_id')::INTEGER) THEN 'requester'
-              WHEN ((SELECT fulfiller_id from middleman_pub.task WHERE id = id LIMIT 1) = current_setting('jwt.claims.person_id')::INTEGER) THEN 'fulfiller'
-              WHEN (SELECT (SELECT count(*) from middleman_pub.task AS t where t.fulfiller_id = current_setting('jwt.claims.person_id')::INTEGER AND t.status != 'finished') = 0) THEN 'open fulfiller'
+              WHEN (SELECT (SELECT requestor_id FROM middleman_pub.task WHERE id = id LIMIT 1) = current_setting('jwt.claims.person_id')::INTEGER) THEN 'requester'
+              WHEN (SELECT (SELECT fulfiller_id FROM middleman_pub.task WHERE id = id LIMIT 1) = current_setting('jwt.claims.person_id')::INTEGER) THEN 'fulfiller'
+              WHEN (SELECT (SELECT COUNT(*) FROM middleman_pub.task AS t WHERE t.fulfiller_id = current_setting('jwt.claims.person_id')::INTEGER AND t.status != 'finished') = 0) THEN 'open fulfiller'
               ELSE 'none'
             END
           )::middleman_pub.user_type
           LIMIT 1
       ) = status
-    ));
+    )
+  );
 
 CREATE POLICY delete_task ON middleman_pub.task FOR DELETE TO middleman_user
   USING (false);

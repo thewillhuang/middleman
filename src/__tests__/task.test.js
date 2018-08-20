@@ -483,13 +483,13 @@ describe("user query", () => {
     expect(body).toHaveProperty(["data", "updateTask", "task", "id"]);
   });
 
-  it("driver should be able to mark task2 as PENDING_APPROVAL for client", async () => {
+  it("driver should be able to mark task2 as PENDING for client", async () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
           nodeId: "${nodeId2}",
           taskPatch: {
-            status: PENDING_APPROVAL
+            status: PENDING
           }
         }) {
           task {
@@ -505,7 +505,6 @@ describe("user query", () => {
       .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
-    // console.log({id: body.data.updateTask.task.id, nodeId:body.data.updateTask.task.nodeId, nodeId2 });
     expect(body).toHaveProperty(["data", "updateTask", "task", "id"]);
   });
 
