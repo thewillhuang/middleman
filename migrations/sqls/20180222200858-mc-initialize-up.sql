@@ -114,7 +114,7 @@ CREATE TYPE middleman_pub.task_type AS ENUM (
 
 CREATE TYPE middleman_pub.task_attribute AS ENUM (
   'car make',
-  'car statusl',
+  'car model',
   'car year',
   'car license plate',
   'car color',
@@ -124,43 +124,26 @@ CREATE TYPE middleman_pub.task_attribute AS ENUM (
 CREATE TYPE middleman_pub.user_type AS ENUM (
   'fulfiller',
   'requester',
-  'open driver',
+  'open fulfiller',
   'none'
 );
 
 CREATE TABLE middleman_pub.task_permission (
-  status middleman_pub.task_status NOT NULL,
+  current_status middleman_pub.task_status NOT NULL,
   user_type middleman_pub.user_type NOT NULL,
-  can_update BOOLEAN NOT NULL
+  can_update BOOLEAN,
+  can_update_to middleman_pub.task_status,
+  PRIMARY KEY (current_status, user_type)
 );
-
-CREATE UNIQUE INDEX ON middleman_pub.task_permission (status, user_type);
-
 
 COMMENT ON TABLE middleman_pub.task_permission IS
   E'@omit';
 
-INSERT INTO middleman_pub.task_permission (status, user_type, can_update) VALUES
-  ('opened', 'requester', true),
-  ('opened', 'fulfiller', false),
-  ('opened', 'open driver', true),
-  ('opened', 'none', false),
-  ('closed', 'requester', false),
-  ('closed', 'fulfiller', false),
-  ('closed', 'open driver', false),
-  ('closed', 'none', false),
-  ('scheduled', 'requester', false),
-  ('scheduled', 'fulfiller', false),
-  ('scheduled', 'open driver', false),
-  ('scheduled', 'none', false),
-  ('pending approval', 'requester', true),
-  ('pending approval', 'fulfiller', false),
-  ('pending approval', 'open driver', false),
-  ('pending approval', 'none', false),
-  ('finished', 'requester', false),
-  ('finished', 'fulfiller', false),
-  ('finished', 'open driver', false),
-  ('finished', 'none', false);
+INSERT INTO middleman_pub.task_permission (current_status, user_type, can_update, can_update_to) VALUES
+  ('opened', 'requester', true, 'closed'),
+  ('opened', 'open fulfiller', true, 'scheduled'),
+  ('scheduled', 'fulfiller', true, 'pending approval'),
+  ('pending approval', 'requester', true, 'finished');
 
 CREATE TABLE middleman_pub.task (
   id BIGSERIAL PRIMARY KEY,
@@ -177,6 +160,8 @@ CREATE TABLE middleman_pub.task (
 );
 
 CREATE INDEX ON middleman_pub.task USING GIST (geog);
+CREATE INDEX ON middleman_pub.task (fulfiller_id);
+CREATE INDEX ON middleman_pub.task (status) WHERE status != 'finished' AND status != 'closed';
 
 CREATE TRIGGER task_updated_at BEFORE UPDATE
   ON middleman_pub.task
@@ -488,7 +473,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.comment_tree TO midd
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_photo TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person_type TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_photo TO middleman_admin;
--- GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_permission TO middleman_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_permission TO middleman_admin;
 
 GRANT SELECT ON TABLE middleman_pub.person TO middleman_visitor, middleman_user;
 GRANT SELECT ON TABLE middleman_pub.comment TO middleman_user, middleman_visitor;
@@ -540,32 +525,37 @@ CREATE POLICY select_task ON middleman_pub.task FOR SELECT TO middleman_user, mi
 CREATE POLICY insert_task ON middleman_pub.task FOR INSERT TO middleman_user
   WITH CHECK ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = TRUE);
 CREATE POLICY update_task ON middleman_pub.task FOR UPDATE TO middleman_user
-  -- using checks current data
-  -- USING ((
-  --   SELECT can_update
-  --   FROM middleman_pub.task_permission
-  --     WHERE status = status
-  --     AND user_type = (
-  --       SELECT CASE
-  --         WHEN (fulfiller_id = current_setting('jwt.claims.person_id')::INTEGER) THEN 'fulfiller'
-  --         WHEN (requestor_id = current_setting('jwt.claims.person_id')::INTEGER) THEN 'requester'
-  --         WHEN (SELECT (SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER LIMIT 1) = FALSE) THEN 'open driver'
-  --         ELSE 'none'
-  --       END
-  --     )::middleman_pub.user_type
-  --   LIMIT 1
-  -- )) WITH CHECK (TRUE);
-  USING (
-    -- a client or current driver
-    requestor_id = current_setting('jwt.claims.person_id')::INTEGER OR
-    fulfiller_id = current_setting('jwt.claims.person_id')::INTEGER OR
-    -- a driver and opened status
-    (
-      ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = FALSE) AND
-      (status = 'opened')
-    )
-      -- ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id')::INTEGER) = FALSE)
-  );
+  USING ((
+    SELECT can_update
+    FROM middleman_pub.task_permission
+      WHERE current_status = status
+      AND user_type = (
+        SELECT CASE
+          WHEN (requestor_id = current_setting('jwt.claims.person_id')::INTEGER) THEN 'requester'
+          WHEN (fulfiller_id = current_setting('jwt.claims.person_id')::INTEGER) THEN 'fulfiller'
+          WHEN (SELECT (SELECT count(*) from middleman_pub.task AS t where t.fulfiller_id = current_setting('jwt.claims.person_id')::INTEGER AND t.status != 'finished') = 0) THEN 'open fulfiller'
+          ELSE 'none'
+        END
+      )::middleman_pub.user_type
+    LIMIT 1
+  -- USING ((TRUE
+  --   )) WITH CHECK (TRUE);
+  )) WITH CHECK ((
+    SELECT
+      (SELECT can_update_to
+        FROM middleman_pub.task_permission
+          WHERE current_status = (SELECT status from middleman_pub.task WHERE id = id LIMIT 1)
+          AND user_type = (
+            SELECT CASE
+              WHEN ((SELECT requestor_id from middleman_pub.task WHERE id = id LIMIT 1) = current_setting('jwt.claims.person_id')::INTEGER) THEN 'requester'
+              WHEN ((SELECT fulfiller_id from middleman_pub.task WHERE id = id LIMIT 1) = current_setting('jwt.claims.person_id')::INTEGER) THEN 'fulfiller'
+              WHEN (SELECT (SELECT count(*) from middleman_pub.task AS t where t.fulfiller_id = current_setting('jwt.claims.person_id')::INTEGER AND t.status != 'finished') = 0) THEN 'open fulfiller'
+              ELSE 'none'
+            END
+          )::middleman_pub.user_type
+          LIMIT 1
+      ) = status
+    ));
 
 CREATE POLICY delete_task ON middleman_pub.task FOR DELETE TO middleman_user
   USING (false);

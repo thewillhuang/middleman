@@ -416,7 +416,9 @@ describe('user query', () => {
           }
         }) {
           task {
+            status
             id
+            fulfillerId
           }
         }
       }`,
@@ -425,6 +427,30 @@ describe('user query', () => {
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .set('Authorization', `Bearer ${driverJwt}`)
+      .send(payload)
+      .expect(200);
+    expect(body).toHaveProperty(['errors']);
+  });
+
+  it('user should not be able to mark task2 as finished when its not pending', async () => {
+    const payload = {
+      query: `mutation {
+        updateTask(input: {
+          nodeId: "${nodeId2}",
+          taskPatch: {
+            status: FINISHED
+          }
+        }) {
+          task {
+            id
+          }
+        }
+      }`,
+    };
+
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set('Authorization', `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
     expect(body).toHaveProperty(['errors']);
@@ -457,13 +483,12 @@ describe('user query', () => {
     expect(body).toHaveProperty(['data', 'updateTask', 'task', 'id']);
   });
 
-  it('driver should be able to mark task2 as PENDING_APPROVAL from client', async () => {
+  it('driver should be able to mark task2 as PENDING_APPROVAL for client', async () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
           nodeId: "${nodeId2}",
           taskPatch: {
-            fulfillerId: "${driverId}",
             status: PENDING_APPROVAL
           }
         }) {
