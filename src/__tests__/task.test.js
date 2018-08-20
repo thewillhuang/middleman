@@ -1,14 +1,14 @@
-import request from 'supertest';
-import faker from 'faker';
-import { POSTGRAPHQLCONFIG } from '../config/index';
-import app from '../server';
+import request from "supertest";
+import faker from "faker";
+import { POSTGRAPHQLCONFIG } from "../config/index";
+import app from "../server";
 
-describe('user query', () => {
+describe("user query", () => {
   const email = faker.internet.email();
   const password = faker.internet.password();
   const firstName = faker.name.firstName();
   const lastName = faker.name.lastName();
-  it('should be able to create a new user', async () => {
+  it("should be able to create a new user", async () => {
     const payload = {
       query: `mutation {
         registerPerson(input:{
@@ -20,7 +20,7 @@ describe('user query', () => {
         }) {
           clientMutationId
         }
-      }`,
+      }`
     };
     await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
@@ -29,25 +29,25 @@ describe('user query', () => {
   });
 
   let jwt;
-  it('should be able to get a jwt from email and password', async () => {
+  it("should be able to get a jwt from email and password", async () => {
     const payload = {
       query: `query {
         authenticate(
           email:"${email}",
           password:"${password}",
         )
-      }`,
+      }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
     jwt = body.data.authenticate;
-    expect(body).toHaveProperty(['data', 'authenticate']);
+    expect(body).toHaveProperty(["data", "authenticate"]);
   });
 
   let id;
-  it('should be able to find self using jwt', async () => {
+  it("should be able to find self using jwt", async () => {
     const payload = {
       query: `query {
         currentPerson {
@@ -55,14 +55,14 @@ describe('user query', () => {
             firstName,
             lastName
           }
-      }`,
+      }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${jwt}`)
+      .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
-    expect(body).toHaveProperty(['data', 'currentPerson', 'id']);
+    expect(body).toHaveProperty(["data", "currentPerson", "id"]);
     expect(body.data.currentPerson.firstName).toEqual(firstName);
     expect(body.data.currentPerson.lastName).toEqual(lastName);
     id = body.data.currentPerson.id;
@@ -72,9 +72,9 @@ describe('user query', () => {
 
   const longitude = getRandomFloat(180);
   const latitude = getRandomFloat(90);
-  const category = 'CAR_WASH';
+  const category = "CAR_WASH";
   let nodeId;
-  it('should be able to add task1', async () => {
+  it("should be able to add task1", async () => {
     const payload = {
       query: `mutation {
         createTask(input: {task:{
@@ -89,21 +89,21 @@ describe('user query', () => {
            category
          }
         }
-      }`,
+      }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${jwt}`)
+      .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
-    expect(body).toHaveProperty(['data', 'createTask', 'task', 'category']);
-    expect(body).toHaveProperty(['data', 'createTask', 'task', 'nodeId']);
+    expect(body).toHaveProperty(["data", "createTask", "task", "category"]);
+    expect(body).toHaveProperty(["data", "createTask", "task", "nodeId"]);
     nodeId = body.data.createTask.task.nodeId;
     expect(body.data.createTask.task.category).toEqual(category);
   });
 
   let totalCount;
-  it('should be able to find nearby tasks', async () => {
+  it("should be able to find nearby tasks", async () => {
     const payload = {
       query: `query {
         tasks(longitude:${longitude}, latitude: ${latitude}, taskTypes:[${category}]) {
@@ -115,18 +115,18 @@ describe('user query', () => {
           },
           totalCount
         }
-      }`,
+      }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${jwt}`)
+      .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
     totalCount = body.data.tasks.totalCount;
   });
 
   let nodeId2;
-  it('create task2', async () => {
+  it("create task2", async () => {
     const payload = {
       query: `mutation {
         createTask(input: {task:{
@@ -141,19 +141,19 @@ describe('user query', () => {
            nodeId
          }
         }
-      }`,
+      }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${jwt}`)
+      .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
-    expect(body).toHaveProperty(['data', 'createTask', 'task', 'category']);
+    expect(body).toHaveProperty(["data", "createTask", "task", "category"]);
     expect(body.data.createTask.task.category).toEqual(category);
     nodeId2 = body.data.createTask.task.nodeId;
   });
 
-  it('tasks should be one more than before', async () => {
+  it("tasks should be one more than before", async () => {
     const payload = {
       query: `query {
         tasks(longitude:${longitude}, latitude: ${latitude}, taskTypes:[${category}]) {
@@ -165,17 +165,17 @@ describe('user query', () => {
           },
           totalCount
         }
-      }`,
+      }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${jwt}`)
+      .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
     expect(body.data.tasks.totalCount).toBeGreaterThan(totalCount);
   });
 
-  it('rejects unauthroized users from making tasks', async () => {
+  it("rejects unauthroized users from making tasks", async () => {
     const payload = {
       query: `mutation {
         createTask(input: {task:{
@@ -189,16 +189,16 @@ describe('user query', () => {
            category
          }
         }
-      }`,
+      }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
-    expect(body).toHaveProperty(['errors']);
+    expect(body).toHaveProperty(["errors"]);
   });
 
-  it('rejects unauthroized users from seeing tasks ', async () => {
+  it("rejects unauthroized users from seeing tasks ", async () => {
     const payload = {
       query: `query {
         tasks(longitude:${longitude}, latitude: ${latitude}, taskTypes:[${category}]) {
@@ -210,20 +210,20 @@ describe('user query', () => {
           },
           totalCount
         }
-      }`,
+      }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
-    expect(body).toHaveProperty(['errors']);
+    expect(body).toHaveProperty(["errors"]);
   });
 
   const email2 = faker.internet.email();
   const password2 = faker.internet.password();
   const firstName2 = faker.name.firstName();
   const lastName2 = faker.name.lastName();
-  it('should be able to create a new user for permission testing', async () => {
+  it("should be able to create a new user for permission testing", async () => {
     const payload = {
       query: `mutation {
         registerPerson(input:{
@@ -235,7 +235,7 @@ describe('user query', () => {
         }) {
           clientMutationId
         }
-      }`,
+      }`
     };
     await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
@@ -244,28 +244,28 @@ describe('user query', () => {
   });
 
   let user2Jwt;
-  it('should be able to login as user2', async () => {
+  it("should be able to login as user2", async () => {
     const payload = {
       query: `query {
         authenticate(
           email:"${email2}",
           password:"${password2}",
         )
-      }`,
+      }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
     user2Jwt = body.data.authenticate;
-    expect(body).toHaveProperty(['data', 'authenticate']);
+    expect(body).toHaveProperty(["data", "authenticate"]);
   });
 
   const driverEmail = faker.internet.email();
   const driverPassword = faker.internet.password();
   const driverFirstName = faker.name.firstName();
   const driverLastName = faker.name.lastName();
-  it('should be able to create a new driver', async () => {
+  it("should be able to create a new driver", async () => {
     const payload = {
       query: `mutation {
         registerPerson(input:{
@@ -277,7 +277,7 @@ describe('user query', () => {
         }) {
           clientMutationId
         }
-      }`,
+      }`
     };
     await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
@@ -286,25 +286,25 @@ describe('user query', () => {
   });
 
   let driverJwt;
-  it('should be able to login as a driver', async () => {
+  it("should be able to login as a driver", async () => {
     const payload = {
       query: `query {
         authenticate(
           email:"${driverEmail}",
           password:"${driverPassword}",
         )
-      }`,
+      }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
     driverJwt = body.data.authenticate;
-    expect(body).toHaveProperty(['data', 'authenticate']);
+    expect(body).toHaveProperty(["data", "authenticate"]);
   });
 
   let driverId;
-  it('should be able to find driver using jwt', async () => {
+  it("should be able to find driver using jwt", async () => {
     const payload = {
       query: `query {
         currentPerson {
@@ -313,22 +313,22 @@ describe('user query', () => {
             lastName
             isClient,
           }
-      }`,
+      }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${driverJwt}`)
+      .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
-    expect(body).toHaveProperty(['data', 'currentPerson', 'id']);
-    expect(body).toHaveProperty(['data', 'currentPerson', 'isClient']);
+    expect(body).toHaveProperty(["data", "currentPerson", "id"]);
+    expect(body).toHaveProperty(["data", "currentPerson", "isClient"]);
     expect(body.data.currentPerson.firstName).toEqual(driverFirstName);
     expect(body.data.currentPerson.lastName).toEqual(driverLastName);
     expect(body.data.currentPerson.isClient).toEqual(false);
     driverId = body.data.currentPerson.id;
   });
 
-  it('driver should be able to see tasks', async () => {
+  it("driver should be able to see tasks", async () => {
     const payload = {
       query: `query {
         tasks(longitude:${longitude}, latitude: ${latitude}, taskTypes:[${category}]) {
@@ -342,18 +342,18 @@ describe('user query', () => {
           },
           totalCount
         }
-      }`,
+      }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${driverJwt}`)
+      .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
     // console.log({ body: JSON.stringify(body), driverJwt });
     expect(body.data.tasks.totalCount).toBeGreaterThan(totalCount);
   });
 
-  it('user2 who did not create task1 should not be able to mark task1 as closed', async () => {
+  it("user2 who did not create task1 should not be able to mark task1 as closed", async () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
@@ -367,18 +367,18 @@ describe('user query', () => {
             id
           }
         }
-      }`,
+      }`
     };
 
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${user2Jwt}`)
+      .set("Authorization", `Bearer ${user2Jwt}`)
       .send(payload)
       .expect(200);
-    expect(body).toHaveProperty(['errors']);
+    expect(body).toHaveProperty(["errors"]);
   });
 
-  it('user1 who created task 1 should be able to mark task 1 as closed', async () => {
+  it("user1 who created task 1 should be able to mark task 1 as closed", async () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
@@ -392,20 +392,20 @@ describe('user query', () => {
             status
           }
         }
-      }`,
+      }`
     };
 
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${jwt}`)
+      .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
-    expect(body).toHaveProperty(['data', 'updateTask', 'task', 'id']);
-    expect(body).toHaveProperty(['data', 'updateTask', 'task', 'status']);
+    expect(body).toHaveProperty(["data", "updateTask", "task", "id"]);
+    expect(body).toHaveProperty(["data", "updateTask", "task", "status"]);
     // console.log({ status: body.data.updateTask.task.status });
   });
 
-  it('driver should not be able to mark a closed job (task1) as taken', async () => {
+  it("driver should not be able to mark a closed job (task1) as taken", async () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
@@ -421,18 +421,18 @@ describe('user query', () => {
             fulfillerId
           }
         }
-      }`,
+      }`
     };
 
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${driverJwt}`)
+      .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
-    expect(body).toHaveProperty(['errors']);
+    expect(body).toHaveProperty(["errors"]);
   });
 
-  it('user should not be able to mark task2 as finished when its not pending', async () => {
+  it("user should not be able to mark task2 as finished when its not pending", async () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
@@ -445,18 +445,18 @@ describe('user query', () => {
             id
           }
         }
-      }`,
+      }`
     };
 
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${jwt}`)
+      .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
-    expect(body).toHaveProperty(['errors']);
+    expect(body).toHaveProperty(["errors"]);
   });
 
-  it('open driver should be able to mark task2 as taken', async () => {
+  it("open driver should be able to mark task2 as taken", async () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
@@ -470,20 +470,20 @@ describe('user query', () => {
             id
           }
         }
-      }`,
+      }`
     };
 
     // console.log({ payload });
 
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${driverJwt}`)
+      .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
-    expect(body).toHaveProperty(['data', 'updateTask', 'task', 'id']);
+    expect(body).toHaveProperty(["data", "updateTask", "task", "id"]);
   });
 
-  it('driver should be able to mark task2 as PENDING_APPROVAL for client', async () => {
+  it("driver should be able to mark task2 as PENDING_APPROVAL for client", async () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
@@ -497,19 +497,19 @@ describe('user query', () => {
             nodeId
           }
         }
-      }`,
+      }`
     };
 
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${driverJwt}`)
+      .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
     // console.log({id: body.data.updateTask.task.id, nodeId:body.data.updateTask.task.nodeId, nodeId2 });
-    expect(body).toHaveProperty(['data', 'updateTask', 'task', 'id']);
+    expect(body).toHaveProperty(["data", "updateTask", "task", "id"]);
   });
 
-  it('user2 should not be able to mark task2 as finished', async () => {
+  it("user2 should not be able to mark task2 as finished", async () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
@@ -522,19 +522,19 @@ describe('user query', () => {
             id
           }
         }
-      }`,
+      }`
     };
 
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${user2Jwt}`)
+      .set("Authorization", `Bearer ${user2Jwt}`)
       .send(payload)
       .expect(200);
     // console.log({error: body})
-    expect(body).toHaveProperty(['errors']);
+    expect(body).toHaveProperty(["errors"]);
   });
 
-  it('user should be able to mark task2 as finished', async () => {
+  it("user should be able to mark task2 as finished", async () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
@@ -547,14 +547,14 @@ describe('user query', () => {
             id
           }
         }
-      }`,
+      }`
     };
 
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
-      .set('Authorization', `Bearer ${jwt}`)
+      .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
-    expect(body).toHaveProperty(['data', 'updateTask', 'task', 'id']);
+    expect(body).toHaveProperty(["data", "updateTask", "task", "id"]);
   });
 });
