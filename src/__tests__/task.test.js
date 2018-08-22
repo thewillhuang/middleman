@@ -126,6 +126,7 @@ describe("user query", () => {
   });
 
   let nodeId2;
+  let task2Id;
   it("create task2", async () => {
     const payload = {
       query: `mutation {
@@ -151,6 +152,7 @@ describe("user query", () => {
     expect(body).toHaveProperty(["data", "createTask", "task", "category"]);
     expect(body.data.createTask.task.category).toEqual(category);
     nodeId2 = body.data.createTask.task.nodeId;
+    task2Id = body.data.createTask.task.id;
   });
 
   it("tasks should be one more than before", async () => {
