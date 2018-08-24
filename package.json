@@ -6,7 +6,7 @@
   "author": "William Huang <will.h86@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "postgraphile": "4.0.0-rc.3"
+    "postgraphile": "4.0.0-rc.4"
   },
   "scripts": {
     "dev": "yarn clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql,json --exec 'yarn builddev'",
@@ -74,9 +74,6 @@
     "uglifyjs-webpack-plugin": "^1.2.4",
     "webpack": "^4.0.0",
     "webpack-cli": "^2.0.6"
-  },
-  "resolutions": {
-    "graphql": "^0.13.2"
   },
   "jest": {
     "testEnvironment": "node",

@@ -74,6 +74,7 @@ describe("user query", () => {
   const latitude = getRandomFloat(90);
   const category = "CAR_WASH";
   let nodeId;
+  let taskId;
   it("should be able to add task1", async () => {
     const payload = {
       query: `mutation {
@@ -99,6 +100,7 @@ describe("user query", () => {
     expect(body).toHaveProperty(["data", "createTask", "task", "category"]);
     expect(body).toHaveProperty(["data", "createTask", "task", "nodeId"]);
     nodeId = body.data.createTask.task.nodeId;
+    taskId = body.data.createTask.task.id;
     expect(body.data.createTask.task.category).toEqual(category);
   });
 
@@ -126,7 +128,7 @@ describe("user query", () => {
   });
 
   let nodeId2;
-  let task2Id;
+  let taskId2;
   it("create task2", async () => {
     const payload = {
       query: `mutation {
@@ -152,7 +154,7 @@ describe("user query", () => {
     expect(body).toHaveProperty(["data", "createTask", "task", "category"]);
     expect(body.data.createTask.task.category).toEqual(category);
     nodeId2 = body.data.createTask.task.nodeId;
-    task2Id = body.data.createTask.task.id;
+    taskId2 = body.data.createTask.task.id;
   });
 
   it("tasks should be one more than before", async () => {
@@ -359,14 +361,12 @@ describe("user query", () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
-          nodeId: "${nodeId}",
-          taskPatch: {
-            fulfillerId: "${id}",
-            status: CLOSED
-          }
+          taskId: "${taskId}",
+          newTaskStatus: CLOSED
         }) {
           task {
             id
+            status
           }
         }
       }`
@@ -377,6 +377,7 @@ describe("user query", () => {
       .set("Authorization", `Bearer ${user2Jwt}`)
       .send(payload)
       .expect(200);
+    // console.log({body: JSON.stringify(body)})
     expect(body).toHaveProperty(["errors"]);
   });
 
@@ -384,10 +385,8 @@ describe("user query", () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
-          nodeId: "${nodeId}",
-          taskPatch: {
-            status: CLOSED
-          }
+          taskId: "${taskId}",
+          newTaskStatus: CLOSED
         }) {
           task {
             id
@@ -411,11 +410,8 @@ describe("user query", () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
-          nodeId: "${nodeId}",
-          taskPatch: {
-            fulfillerId: "${driverId}",
-            status: SCHEDULED
-          }
+          taskId: "${taskId}",
+          newTaskStatus: SCHEDULED
         }) {
           task {
             status
@@ -438,10 +434,8 @@ describe("user query", () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
-          nodeId: "${nodeId2}",
-          taskPatch: {
-            status: FINISHED
-          }
+          taskId: "${taskId2}",
+          newTaskStatus: FINISHED
         }) {
           task {
             id
@@ -455,6 +449,7 @@ describe("user query", () => {
       .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
+    console.log({ body: JSON.stringify(body) });
     expect(body).toHaveProperty(["errors"]);
   });
 
@@ -462,11 +457,8 @@ describe("user query", () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
-          nodeId: "${nodeId2}",
-          taskPatch: {
-            fulfillerId: "${driverId}",
-            status: SCHEDULED
-          }
+          taskId: "${taskId2}",
+          newTaskStatus: SCHEDULED
         }) {
           task {
             id
@@ -489,10 +481,8 @@ describe("user query", () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
-          nodeId: "${nodeId2}",
-          taskPatch: {
-            status: PENDING
-          }
+          taskId: "${taskId2}",
+          newTaskStatus: PENDING
         }) {
           task {
             id
@@ -514,10 +504,8 @@ describe("user query", () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
-          nodeId: "${nodeId2}",
-          taskPatch: {
-            status: FINISHED
-          }
+          taskId: "${taskId2}",
+          newTaskStatus: FINISHED
         }) {
           task {
             id
@@ -539,10 +527,8 @@ describe("user query", () => {
     const payload = {
       query: `mutation {
         updateTask(input: {
-          nodeId: "${nodeId2}",
-          taskPatch: {
-            status: FINISHED
-          }
+          taskId: "${taskId2}",
+          newTaskStatus: FINISHED
         }) {
           task {
             id
