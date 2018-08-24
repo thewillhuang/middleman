@@ -447,87 +447,87 @@ $$ LANGUAGE plpgsql STRICT SECURITY INVOKER VOLATILE;
 COMMENT ON FUNCTION middleman_pub.remove_comment(BIGINT) IS
   'delete comment by id';
 
-CREATE FUNCTION middleman_pub.task_update_with_check(
-  new_id BIGINT,
-  requestor_id BIGINT,
-  fulfiller_id BIGINT,
-  status middleman_pub.task_status
-) RETURNS BOOLEAN AS $$
-  BEGIN
-    RAISE DEBUG 'Value: %', id;
-    RAISE DEBUG 'Value: %', requestor_id;
-    RAISE DEBUG 'Value: %', fulfiller_id;
-    RAISE DEBUG 'Value: %', status;
-    SELECT
-      (SELECT permission.can_update_to
-        FROM middleman_pub.task_permission AS permission
-          WHERE permission.current_status = (SELECT current_task.status FROM middleman_pub.task AS current_task WHERE current_task.id = new_id LIMIT 1)
-          AND permission.user_type = (
-            SELECT CASE
-              WHEN (SELECT (SELECT current_task.requestor_id FROM middleman_pub.task AS current_task WHERE current_task.id = new_id LIMIT 1) = current_setting('jwt.claims.person_id', true)::INTEGER) THEN 'requester'
-              WHEN (SELECT (SELECT current_task.fulfiller_id FROM middleman_pub.task AS current_task WHERE current_task.id = new_id LIMIT 1) = current_setting('jwt.claims.person_id', true)::INTEGER) THEN 'fulfiller'
-              WHEN (
-                SELECT
-                  (
-                    SELECT COUNT(*) FROM middleman_pub.task AS current_task
-                    WHERE current_task.fulfiller_id = current_setting('jwt.claims.person_id', true)::INTEGER
-                      AND current_task.status != 'finished'
-                  ) = 0 AND (SELECT (SELECT current_person.is_client FROM middleman_pub.person AS current_person WHERE current_person.id = current_setting('jwt.claims.person_id', true)::INTEGER) = FALSE)
-              ) THEN 'open fulfiller'
-              ELSE 'none'
-            END
-          )::middleman_pub.user_type
-          LIMIT 1
-      )::middleman_pub.task_status = status::middleman_pub.task_status;
+-- CREATE FUNCTION middleman_pub.task_update_with_check(
+--   new_id BIGINT,
+--   requestor_id BIGINT,
+--   fulfiller_id BIGINT,
+--   status middleman_pub.task_status
+-- ) RETURNS BOOLEAN AS $$
+--   BEGIN
+--     RAISE DEBUG 'Value: %', new_id;
+--     RAISE DEBUG 'Value: %', requestor_id;
+--     RAISE DEBUG 'Value: %', fulfiller_id;
+--     RAISE DEBUG 'Value: %', status;
+--     SELECT
+--       (SELECT permission.can_update_to
+--         FROM middleman_pub.task_permission AS permission
+--           WHERE permission.current_status = (SELECT current_task.status FROM middleman_pub.task AS current_task WHERE current_task.id = new_id LIMIT 1)
+--           AND permission.user_type = (
+--             SELECT CASE
+--               WHEN (SELECT (SELECT current_task.requestor_id FROM middleman_pub.task AS current_task WHERE current_task.id = new_id LIMIT 1) = current_setting('jwt.claims.person_id', true)::INTEGER) THEN 'requester'
+--               WHEN (SELECT (SELECT current_task.fulfiller_id FROM middleman_pub.task AS current_task WHERE current_task.id = new_id LIMIT 1) = current_setting('jwt.claims.person_id', true)::INTEGER) THEN 'fulfiller'
+--               WHEN (
+--                 SELECT
+--                   (
+--                     SELECT COUNT(*) FROM middleman_pub.task AS current_task
+--                     WHERE current_task.fulfiller_id = current_setting('jwt.claims.person_id', true)::INTEGER
+--                       AND current_task.status != 'finished'
+--                   ) = 0 AND (SELECT (SELECT current_person.is_client FROM middleman_pub.person AS current_person WHERE current_person.id = current_setting('jwt.claims.person_id', true)::INTEGER) = FALSE)
+--               ) THEN 'open fulfiller'
+--               ELSE 'none'
+--             END
+--           )::middleman_pub.user_type
+--           LIMIT 1
+--       )::middleman_pub.task_status = status::middleman_pub.task_status;
 
-    -- SELECT
-    --   (SELECT can_update_to
-    --     FROM middleman_pub.task_permission
-    --       WHERE current_status = (SELECT status FROM middleman_pub.task WHERE id = id LIMIT 1)
-    --       AND user_type = (
-    --         SELECT CASE
-    --           WHEN (SELECT (SELECT requestor_id FROM middleman_pub.task WHERE id = id LIMIT 1) = current_setting('jwt.claims.person_id', true)::INTEGER) THEN 'requester'
-    --           WHEN (SELECT (SELECT fulfiller_id FROM middleman_pub.task WHERE id = id LIMIT 1) = current_setting('jwt.claims.person_id', true)::INTEGER) THEN 'fulfiller'
-    --           WHEN (
-    --             SELECT
-    --               (
-    --                 SELECT COUNT(*) FROM middleman_pub.task
-    --                 WHERE fulfiller_id = current_setting('jwt.claims.person_id', true)::INTEGER
-    --                   AND status != 'finished'
-    --               ) = 0 AND (SELECT (SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id', true)::INTEGER) = FALSE)
-    --           ) THEN 'open fulfiller'
-    --           ELSE 'none'
-    --         END
-    --       )::middleman_pub.user_type
-    --       LIMIT 1
-    --   )::middleman_pub.task_status = status::middleman_pub.task_status;
+--     -- SELECT
+--     --   (SELECT can_update_to
+--     --     FROM middleman_pub.task_permission
+--     --       WHERE current_status = (SELECT status FROM middleman_pub.task WHERE id = id LIMIT 1)
+--     --       AND user_type = (
+--     --         SELECT CASE
+--     --           WHEN (SELECT (SELECT requestor_id FROM middleman_pub.task WHERE id = id LIMIT 1) = current_setting('jwt.claims.person_id', true)::INTEGER) THEN 'requester'
+--     --           WHEN (SELECT (SELECT fulfiller_id FROM middleman_pub.task WHERE id = id LIMIT 1) = current_setting('jwt.claims.person_id', true)::INTEGER) THEN 'fulfiller'
+--     --           WHEN (
+--     --             SELECT
+--     --               (
+--     --                 SELECT COUNT(*) FROM middleman_pub.task
+--     --                 WHERE fulfiller_id = current_setting('jwt.claims.person_id', true)::INTEGER
+--     --                   AND status != 'finished'
+--     --               ) = 0 AND (SELECT (SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id', true)::INTEGER) = FALSE)
+--     --           ) THEN 'open fulfiller'
+--     --           ELSE 'none'
+--     --         END
+--     --       )::middleman_pub.user_type
+--     --       LIMIT 1
+--     --   )::middleman_pub.task_status = status::middleman_pub.task_status;
 
-    -- SELECT
-    --   (SELECT can_update_to
-    --     FROM middleman_pub.task_permission
-    --       WHERE current_status = (SELECT status FROM middleman_pub.task WHERE id = new_id LIMIT 1)
-    --       AND user_type = (
-    --         SELECT CASE
-    --           WHEN (SELECT (SELECT requestor_id FROM middleman_pub.task WHERE id = new_id LIMIT 1) = current_setting('jwt.claims.person_id', true)::INTEGER) THEN 'requester'
-    --           WHEN (SELECT (SELECT fulfiller_id FROM middleman_pub.task WHERE id = new_id LIMIT 1) = current_setting('jwt.claims.person_id', true)::INTEGER) THEN 'fulfiller'
-    --           WHEN (
-    --             SELECT
-    --               (
-    --                 SELECT COUNT(*) FROM middleman_pub.task AS t
-    --                 WHERE t.fulfiller_id = current_setting('jwt.claims.person_id', true)::INTEGER
-    --                   AND t.status != 'finished'
-    --               ) = 0
-    --           ) THEN 'open fulfiller'
-    --           ELSE 'none'
-    --         END
-    --       )::middleman_pub.user_type
-    --       LIMIT 1
-    --   ) = new_status::middleman_pub.task_status;
-  END;
-$$ LANGUAGE plpgsql STABLE;
+--     -- SELECT
+--     --   (SELECT can_update_to
+--     --     FROM middleman_pub.task_permission
+--     --       WHERE current_status = (SELECT status FROM middleman_pub.task WHERE id = new_id LIMIT 1)
+--     --       AND user_type = (
+--     --         SELECT CASE
+--     --           WHEN (SELECT (SELECT requestor_id FROM middleman_pub.task WHERE id = new_id LIMIT 1) = current_setting('jwt.claims.person_id', true)::INTEGER) THEN 'requester'
+--     --           WHEN (SELECT (SELECT fulfiller_id FROM middleman_pub.task WHERE id = new_id LIMIT 1) = current_setting('jwt.claims.person_id', true)::INTEGER) THEN 'fulfiller'
+--     --           WHEN (
+--     --             SELECT
+--     --               (
+--     --                 SELECT COUNT(*) FROM middleman_pub.task AS t
+--     --                 WHERE t.fulfiller_id = current_setting('jwt.claims.person_id', true)::INTEGER
+--     --                   AND t.status != 'finished'
+--     --               ) = 0
+--     --           ) THEN 'open fulfiller'
+--     --           ELSE 'none'
+--     --         END
+--     --       )::middleman_pub.user_type
+--     --       LIMIT 1
+--     --   ) = new_status::middleman_pub.task_status;
+--   END;
+-- $$ LANGUAGE plpgsql STABLE;
 
-COMMENT ON FUNCTION middleman_pub.task_update_with_check(BIGINT, BIGINT, BIGINT, middleman_pub.task_status) IS
-  E'@omit';
+-- COMMENT ON FUNCTION middleman_pub.task_update_with_check(BIGINT, BIGINT, BIGINT, middleman_pub.task_status) IS
+--   E'@omit';
 
 -- permissions
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_status) TO middleman_user;
@@ -538,7 +538,7 @@ GRANT EXECUTE ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT) TO midd
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT, BOOLEAN) TO middleman_visitor;
-GRANT EXECUTE ON FUNCTION middleman_pub.task_update_with_check(BIGINT, BIGINT, BIGINT, middleman_pub.task_status) TO middleman_user;
+-- GRANT EXECUTE ON FUNCTION middleman_pub.task_update_with_check(BIGINT, BIGINT, BIGINT, middleman_pub.task_status) TO middleman_user;
 
 GRANT USAGE ON SEQUENCE middleman_pub.comment_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.person_id_seq TO middleman_user;
