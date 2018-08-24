@@ -500,6 +500,29 @@ describe("user query", () => {
     expect(body).toHaveProperty(["data", "updateTask", "task", "id"]);
   });
 
+  it("driver should not be able to mark task2 as FINISHED for client", async () => {
+    const payload = {
+      query: `mutation {
+        updateTask(input: {
+          taskId: "${taskId2}",
+          newTaskStatus: FINISHED
+        }) {
+          task {
+            id
+            nodeId
+          }
+        }
+      }`
+    };
+
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${driverJwt}`)
+      .send(payload)
+      .expect(200);
+    expect(body).toHaveProperty(["errors"]);
+  });
+
   it("user2 should not be able to mark task2 as finished", async () => {
     const payload = {
       query: `mutation {
@@ -543,5 +566,29 @@ describe("user query", () => {
       .send(payload)
       .expect(200);
     expect(body).toHaveProperty(["data", "updateTask", "task", "id"]);
+  });
+
+  it("driver should not be able to mark a finished job (task2) as taken", async () => {
+    const payload = {
+      query: `mutation {
+        updateTask(input: {
+          taskId: "${taskId2}",
+          newTaskStatus: SCHEDULED
+        }) {
+          task {
+            status
+            id
+            fulfillerId
+          }
+        }
+      }`
+    };
+
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${driverJwt}`)
+      .send(payload)
+      .expect(200);
+    expect(body).toHaveProperty(["errors"]);
   });
 });
