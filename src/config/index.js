@@ -1,25 +1,25 @@
-import { join } from 'path';
-import url from 'url';
-import bluebird from 'bluebird';
-import ca from './rds-combined-ca-bundle.pem';
+import { join } from "path";
+import url from "url";
+import bluebird from "bluebird";
+import ca from "./rds-combined-ca-bundle.pem";
 
 const {
   PORT = 3000,
-  DATABASE = 'middleman',
-  NODE_ENV = 'development',
-  JWT_SECRET = 'lololol',
-  DB_URL = `postgresql://williamhuang@localhost/${DATABASE}`,
+  DATABASE = "middleman",
+  NODE_ENV = "development",
+  JWT_SECRET = "lololol",
+  DB_URL = `postgresql://williamhuang@localhost/${DATABASE}`
 } = process.env;
 
 export const ENV = NODE_ENV;
-export const isDevelopment = NODE_ENV === 'development';
-export const isTest = NODE_ENV === 'test';
-export const isProduction = NODE_ENV === 'production';
+export const isDevelopment = NODE_ENV === "development";
+export const isTest = NODE_ENV === "test";
+export const isProduction = NODE_ENV === "production";
 
 const params = url.parse(
   isTest ? `postgresql://williamhuang@db/${DATABASE}` : DB_URL
 );
-const auth = params.auth.split(':');
+const auth = params.auth.split(":");
 
 export const APPPORT = PORT;
 
@@ -30,65 +30,60 @@ export const PGCONFIG = {
   password: auth[1],
   host: params.hostname,
   port: params.port,
-  database: params.pathname.split('/')[1],
+  database: params.pathname.split("/")[1],
   idleTimeoutMillis: 1000,
   connectionTimeoutMillis: 5000,
-  Promise: bluebird,
+  Promise: bluebird
 };
 
-export const cachePath = '../dist/postgraphile.cache';
+// export const cachePath = '../dist/postgraphile.cache';
 
 export const POSTGRAPHQLCONFIG = {
   dynamicJson: true,
   graphiql: true,
   // watchPg: isDevelopment,
-  graphqlRoute: '/',
+  graphqlRoute: "/",
   enableQueryBatching: true,
   ignoreRBAC: false,
   includeExtensionResources: false,
   disableQueryLog: isProduction,
   extendedErrors: [
-    'severity',
-    'code',
-    'detail',
-    'hint',
-    'position',
-    'internalPosition',
-    'internalQuery',
-    'where',
-    'schema',
-    'table',
-    'column',
-    'dataType',
-    'constraint',
-    'file',
-    'line',
-    'routine',
+    "severity",
+    "code",
+    "detail",
+    "hint",
+    "position",
+    "internalPosition",
+    "internalQuery",
+    "where",
+    "schema",
+    "table",
+    "column",
+    "dataType",
+    "constraint",
+    "file",
+    "line",
+    "routine"
   ],
   jwtSecret: JWT_SECRET,
+  exportGqlSchemaPath: join(__dirname, "../../dist", "schema.graphql"),
   jwtPgTypeIdentifier: `${DATABASE}_pub.jwt_token`,
   pgDefaultRole: `${DATABASE}_visitor`,
-  legacyRelations: 'omit',
+  legacyRelations: "omit",
   jwtVerifyOptions: {
-    algorithms: ['HS256'],
-    maxAge: '1h',
-    audience: 'postgraphile',
-    issuer: 'postgraphile',
-  },
+    algorithms: ["HS256"],
+    maxAge: "1h",
+    audience: "postgraphile",
+    issuer: "postgraphile"
+  }
 };
+
+export const cachePath = "../dist/postgraphile.cache";
 
 if (!isDevelopment && !isTest) {
   PGCONFIG.ssl = {
     rejectUnauthorized: true,
-    ca,
+    ca
   };
-  POSTGRAPHQLCONFIG.readCache = join(__dirname, cachePath);
-}
-
-if (!isTest) {
-  POSTGRAPHQLCONFIG.exportGqlSchemaPath = join(
-    __dirname,
-    '../../dist',
-    'schema.graphql'
-  );
+  // POSTGRAPHQLCONFIG.readCache = join(__dirname, cachePath);
 }

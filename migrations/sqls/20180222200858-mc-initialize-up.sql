@@ -556,6 +556,7 @@ GRANT INSERT, UPDATE ON TABLE middleman_pub.person_photo TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_type TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.task_photo TO middleman_user;
 
+-- comment permission
 ALTER TABLE middleman_pub.comment ENABLE ROW LEVEL SECURITY;
 CREATE POLICY select_comment ON middleman_pub.comment FOR SELECT TO middleman_user, middleman_visitor
   USING (true);
@@ -569,6 +570,7 @@ CREATE POLICY update_comment ON middleman_pub.comment FOR UPDATE TO middleman_us
 CREATE POLICY delete_comment ON middleman_pub.comment FOR DELETE TO middleman_user
   USING (person_id = current_setting('jwt.claims.person_id', true)::INTEGER);
 
+-- person permission
 ALTER TABLE middleman_pub.person ENABLE ROW LEVEL SECURITY;
 CREATE POLICY select_person ON middleman_pub.person FOR SELECT TO middleman_user, middleman_visitor
   USING (true);
@@ -577,6 +579,7 @@ CREATE POLICY update_person ON middleman_pub.person FOR UPDATE TO middleman_user
 CREATE POLICY delete_person ON middleman_pub.person FOR DELETE TO middleman_user
   USING (id = current_setting('jwt.claims.person_id', true)::INTEGER);
 
+-- task permissions
 ALTER TABLE middleman_pub.task ENABLE ROW LEVEL SECURITY;
 CREATE POLICY select_task ON middleman_pub.task FOR SELECT TO middleman_user, middleman_visitor
   USING (true);
