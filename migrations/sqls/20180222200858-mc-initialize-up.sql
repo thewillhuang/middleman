@@ -139,11 +139,11 @@ CREATE TABLE middleman_pub.task_permission (
 COMMENT ON TABLE middleman_pub.task_permission IS
   E'@omit';
 
-INSERT INTO middleman_pub.task_permission (current_status, user_type, can_update, can_update_to) VALUES
-  ('opened', 'requester', true, 'closed'),
-  ('opened', 'open fulfiller', true, 'scheduled'),
-  ('scheduled', 'fulfiller', true, 'pending'),
-  ('pending', 'requester', true, 'finished');
+INSERT INTO middleman_pub.task_permission (current_status, user_type, can_update_to) VALUES
+  ('opened', 'requester', 'closed'),
+  ('opened', 'open fulfiller', 'scheduled'),
+  ('scheduled', 'fulfiller', 'pending'),
+  ('pending', 'requester', 'finished');
 
 CREATE TABLE middleman_pub.task (
   id BIGSERIAL PRIMARY KEY,
@@ -301,6 +301,7 @@ COMMENT ON COLUMN middleman_priv.person_account.email IS
 COMMENT ON COLUMN middleman_priv.person_account.password_hash IS
   'An opaque hash of the person’s password.';
 
+-- auth functions
 CREATE FUNCTION middleman_pub.register_person(
   first_name TEXT,
   last_name TEXT,
@@ -368,6 +369,7 @@ $$ LANGUAGE sql stable;
 COMMENT ON FUNCTION middleman_pub.current_person() IS
   'Gets the person who was identified by our JWT.';
 
+-- tasks functions
 CREATE FUNCTION middleman_pub.tasks(
   latitude REAL,
   longitude REAL,
@@ -390,29 +392,26 @@ CREATE FUNCTION middleman_pub.update_task(
 ) RETURNS middleman_pub.task AS $$
   DECLARE
     task middleman_pub.task;
-    user_id CONSTANT BIGINT NOT NULL := current_setting('jwt.claims.person_id', true)::BIGINT;
+    user_id CONSTANT BIGINT NOT NULL := current_setting('jwt.claims.person_id', true);
     current_task_status CONSTANT middleman_pub.task_status NOT NULL := (SELECT current_task.status FROM middleman_pub.task AS current_task WHERE current_task.id = task_id LIMIT 1);
     current_fulfiller_id CONSTANT BIGINT := (SELECT current_task.fulfiller_id FROM middleman_pub.task AS current_task WHERE current_task.id = task_id LIMIT 1);
     current_requester_id CONSTANT BIGINT := (SELECT current_task.requestor_id FROM middleman_pub.task AS current_task WHERE current_task.id = task_id LIMIT 1);
-    is_client CONSTANT BOOLEAN NOT NULL := (SELECT (SELECT current_person.is_client FROM middleman_pub.person AS current_person WHERE current_person.id = user_id LIMIT 1) = FALSE);
+    is_client CONSTANT BOOLEAN NOT NULL := ((SELECT current_person.is_client FROM middleman_pub.person AS current_person WHERE current_person.id = user_id LIMIT 1) = FALSE);
     current_user_type CONSTANT middleman_pub.user_type NOT NULL := (SELECT
       CASE
-        WHEN (SELECT current_requester_id = user_id) THEN 'requester'
-        WHEN (SELECT current_fulfiller_id = user_id) THEN 'fulfiller'
-        WHEN (SELECT (
-                SELECT COUNT(*)
-                FROM middleman_pub.task AS current_task
-                WHERE current_task.fulfiller_id = user_id
-                AND current_task.status != 'finished'
-                AND current_task.status != 'closed'
-                ) = 0
-                AND is_client
+        WHEN (current_requester_id = user_id) THEN 'requester'
+        WHEN (current_fulfiller_id = user_id) THEN 'fulfiller'
+        WHEN ((SELECT COUNT(*)
+              FROM middleman_pub.task AS current_task
+              WHERE current_task.fulfiller_id = user_id
+              AND current_task.status != 'finished'
+              AND current_task.status != 'closed') = 0
+              AND is_client
               ) THEN 'open fulfiller'
         ELSE 'none'
       END
     );
-    can_update CONSTANT BOOLEAN := (SELECT
-       (SELECT permission.can_update_to
+    can_update CONSTANT BOOLEAN := ((SELECT permission.can_update_to
           FROM middleman_pub.task_permission AS permission
             WHERE permission.current_status = current_task_status
             AND permission.user_type = current_user_type
@@ -440,6 +439,7 @@ $$ LANGUAGE plpgsql STRICT SECURITY INVOKER VOLATILE;
 COMMENT ON FUNCTION middleman_pub.update_task(BIGINT,middleman_pub.task_status) IS
   'Update task status depending on permissions';
 
+-- comment functions
 CREATE FUNCTION middleman_pub.comment_child(
   id BIGINT
 ) RETURNS SETOF middleman_pub.comment as $$
