@@ -390,7 +390,7 @@ CREATE FUNCTION middleman_pub.update_task(
 ) RETURNS middleman_pub.task AS $$
   DECLARE
     task middleman_pub.task;
-    user_id CONSTANT BIGINT NOT NULL := current_setting('jwt.claims.person_id', true)::INTEGER;
+    user_id CONSTANT BIGINT NOT NULL := current_setting('jwt.claims.person_id', true)::BIGINT;
     current_task_status CONSTANT middleman_pub.task_status NOT NULL := (SELECT current_task.status FROM middleman_pub.task AS current_task WHERE current_task.id = task_id LIMIT 1);
     current_fulfiller_id CONSTANT BIGINT := (SELECT current_task.fulfiller_id FROM middleman_pub.task AS current_task WHERE current_task.id = task_id LIMIT 1);
     current_requester_id CONSTANT BIGINT := (SELECT current_task.requestor_id FROM middleman_pub.task AS current_task WHERE current_task.id = task_id LIMIT 1);
@@ -562,39 +562,39 @@ CREATE POLICY select_comment ON middleman_pub.comment FOR SELECT TO middleman_us
   USING (true);
 CREATE POLICY insert_comment ON middleman_pub.comment FOR INSERT TO middleman_user
   WITH CHECK (
-    (person_id = current_setting('jwt.claims.person_id', true)::INTEGER) AND
+    (person_id = current_setting('jwt.claims.person_id', true)::BIGINT) AND
     ((SELECT status FROM middleman_pub.task WHERE id = task_id) = 'finished')
   );
 CREATE POLICY update_comment ON middleman_pub.comment FOR UPDATE TO middleman_user
-  USING (person_id = current_setting('jwt.claims.person_id', true)::INTEGER);
+  USING (person_id = current_setting('jwt.claims.person_id', true)::BIGINT);
 CREATE POLICY delete_comment ON middleman_pub.comment FOR DELETE TO middleman_user
-  USING (person_id = current_setting('jwt.claims.person_id', true)::INTEGER);
+  USING (person_id = current_setting('jwt.claims.person_id', true)::BIGINT);
 
 -- person permission
 ALTER TABLE middleman_pub.person ENABLE ROW LEVEL SECURITY;
 CREATE POLICY select_person ON middleman_pub.person FOR SELECT TO middleman_user, middleman_visitor
   USING (true);
 CREATE POLICY update_person ON middleman_pub.person FOR UPDATE TO middleman_user
-  USING (id = current_setting('jwt.claims.person_id', true)::INTEGER);
+  USING (id = current_setting('jwt.claims.person_id', true)::BIGINT);
 CREATE POLICY delete_person ON middleman_pub.person FOR DELETE TO middleman_user
-  USING (id = current_setting('jwt.claims.person_id', true)::INTEGER);
+  USING (id = current_setting('jwt.claims.person_id', true)::BIGINT);
 
 -- task permissions
 ALTER TABLE middleman_pub.task ENABLE ROW LEVEL SECURITY;
 CREATE POLICY select_task ON middleman_pub.task FOR SELECT TO middleman_user, middleman_visitor
   USING (true);
 CREATE POLICY insert_task ON middleman_pub.task FOR INSERT TO middleman_user
-  WITH CHECK ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id', true)::INTEGER) = TRUE);
+  WITH CHECK ((SELECT is_client FROM middleman_pub.person WHERE id = current_setting('jwt.claims.person_id', true)::BIGINT) = TRUE);
 CREATE POLICY update_task ON middleman_pub.task FOR UPDATE TO middleman_user
   USING (
-    requestor_id = current_setting('jwt.claims.person_id', true)::INTEGER OR
-    fulfiller_id = current_setting('jwt.claims.person_id', true)::INTEGER OR
+    requestor_id = current_setting('jwt.claims.person_id', true)::BIGINT OR
+    fulfiller_id = current_setting('jwt.claims.person_id', true)::BIGINT OR
     (SELECT
       (SELECT COUNT(*) FROM middleman_pub.task AS t
-              WHERE t.fulfiller_id = current_setting('jwt.claims.person_id', true)::INTEGER
+              WHERE t.fulfiller_id = current_setting('jwt.claims.person_id', true)::BIGINT
                 AND t.status != 'finished'
       ) = 0
-      AND (SELECT (SELECT current_person.is_client FROM middleman_pub.person AS current_person WHERE current_person.id = current_setting('jwt.claims.person_id', true)::INTEGER) = FALSE)
+      AND (SELECT (SELECT current_person.is_client FROM middleman_pub.person AS current_person WHERE current_person.id = current_setting('jwt.claims.person_id', true)::BIGINT) = FALSE)
     )
   );
 

@@ -449,7 +449,7 @@ describe("user query", () => {
       .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
-    console.log({ body: JSON.stringify(body) });
+    // console.log({ body: JSON.stringify(body) });
     expect(body).toHaveProperty(["errors"]);
   });
 
