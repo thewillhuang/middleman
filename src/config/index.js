@@ -66,7 +66,6 @@ export const POSTGRAPHQLCONFIG = {
     "routine"
   ],
   jwtSecret: JWT_SECRET,
-  exportGqlSchemaPath: join(__dirname, "../../dist", "schema.graphql"),
   jwtPgTypeIdentifier: `${DATABASE}_pub.jwt_token`,
   pgDefaultRole: `${DATABASE}_visitor`,
   legacyRelations: "omit",
@@ -86,4 +85,12 @@ if (!isDevelopment && !isTest) {
     ca
   };
   // POSTGRAPHQLCONFIG.readCache = join(__dirname, cachePath);
+}
+
+if (isDevelopment) {
+  POSTGRAPHQLCONFIG.exportGqlSchemaPath = join(
+    __dirname,
+    "../../dist",
+    "schema.graphql"
+  );
 }
