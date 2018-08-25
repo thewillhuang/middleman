@@ -213,7 +213,7 @@ CREATE TRIGGER comment_updated_at BEFORE UPDATE
   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
 
 COMMENT ON TABLE middleman_pub.comment IS
-  E'@omit all,delete';
+  E'@omit all,delete,insert';
 
 CREATE TABLE middleman_pub.comment_tree (
   parent_id BIGINT NOT NULL REFERENCES middleman_pub.comment ON UPDATE CASCADE,
@@ -375,7 +375,7 @@ CREATE FUNCTION middleman_pub.tasks(
   longitude REAL,
   task_types middleman_pub.task_type[],
   task_status middleman_pub.task_status DEFAULT 'opened'
-) RETURNS SETOF middleman_pub.task as $$
+) RETURNS SETOF middleman_pub.task AS $$
   SELECT *
   FROM middleman_pub.task
   WHERE middleman_pub.task.status = task_status
@@ -440,9 +440,42 @@ COMMENT ON FUNCTION middleman_pub.update_task(BIGINT,middleman_pub.task_status) 
   'Update task status depending on permissions';
 
 -- comment functions
+-- CREATE FUNCTION middleman_pub.create_comment(
+--   task_id BIGINT,
+--   commentary TEXT DEFAULT NULL,
+--   star SMALLINT DEFAULT NULL
+-- ) RETURNS middleman_pub.comment AS $$
+--   DECLARE
+--     comment middleman_pub.comment;
+--     author_id CONSTANT BIGINT NOT NULL := current_setting('jwt.claims.person_id', true);
+--     person_id CONSTANT BIGINT NOT NULL := SELECT fulfiller_id FROM middleman_pub.task WHERE id = task_id LIMIT 1;
+--   BEGIN
+--   -- CREATE TABLE middleman_pub.comment (
+--   --   id BIGSERIAL PRIMARY KEY,
+--   --   commentary TEXT,
+--   --   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
+--   --   author_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
+--   --   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
+--   --   stars SMALLINT,
+--   --   deleted BOOLEAN NOT NULL DEFAULT FALSE,
+--   --   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--   --   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+--   -- );
+--     IF task_id = NULL THEN
+--       RAISE 'task id cannot be null'
+--     ELSE IF commentary = NULL AND star = NULL THEN
+--       RAISE 'at least one of commentary or star must have some value'
+--     ELSE IF commentary != NULL AND star != NULL THEN
+--       INSERT INTO middleman_pub.comment (stars, commentary, person_id, author_id) VALUES (star, commentary, person_id, author_id)
+--     ELSE IF star = null THEN
+--       INSERT INTO
+--     END IF;
+--   END;
+-- $$
+
 CREATE FUNCTION middleman_pub.comment_child(
   id BIGINT
-) RETURNS SETOF middleman_pub.comment as $$
+) RETURNS SETOF middleman_pub.comment AS $$
     SELECT c.*
     FROM middleman_pub.comment AS c
       JOIN middleman_pub.comment_tree AS t ON c.id = t.child_id
@@ -454,7 +487,7 @@ COMMENT ON FUNCTION middleman_pub.comment_child(BIGINT) IS
 
 CREATE FUNCTION middleman_pub.comment_parent(
   id BIGINT
-) RETURNS SETOF middleman_pub.comment as $$
+) RETURNS SETOF middleman_pub.comment AS $$
   SELECT c.*
   FROM middleman_pub.comment AS c
     JOIN middleman_pub.comment_tree AS t ON c.id = t.parent_id
@@ -467,11 +500,12 @@ COMMENT ON FUNCTION middleman_pub.comment_parent(BIGINT) IS
 CREATE FUNCTION middleman_pub.reply_with_comment(
   parent_id BIGINT,
   commentary TEXT
-) RETURNS void as $$
+) RETURNS void AS $$
   DECLARE
   author_id CONSTANT BIGINT := (SELECT id FROM current_person());
   person_id CONSTANT BIGINT := (SELECT person_id FROM middleman_pub.comment WHERE id = parent_id);
   task_id CONSTANT BIGINT := (SELECT task_id FROM middleman_pub.comment WHERE id = parent_id);
+  comment_id BIGINT;
   BEGIN
     WITH comment_id AS (
       INSERT INTO middleman_pub.comment (commentary, author_id, person_id, task_id)
