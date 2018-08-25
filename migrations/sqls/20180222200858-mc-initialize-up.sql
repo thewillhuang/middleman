@@ -394,35 +394,39 @@ CREATE FUNCTION middleman_pub.update_task(
     current_task_status CONSTANT middleman_pub.task_status NOT NULL := (SELECT current_task.status FROM middleman_pub.task AS current_task WHERE current_task.id = task_id LIMIT 1);
     current_fulfiller_id CONSTANT BIGINT := (SELECT current_task.fulfiller_id FROM middleman_pub.task AS current_task WHERE current_task.id = task_id LIMIT 1);
     current_requester_id CONSTANT BIGINT := (SELECT current_task.requestor_id FROM middleman_pub.task AS current_task WHERE current_task.id = task_id LIMIT 1);
-    is_client CONSTANT BOOLEAN NOT NULL := (SELECT (SELECT current_person.is_client FROM middleman_pub.person AS current_person WHERE current_person.id = user_id) = FALSE);
+    is_client CONSTANT BOOLEAN NOT NULL := (SELECT (SELECT current_person.is_client FROM middleman_pub.person AS current_person WHERE current_person.id = user_id LIMIT 1) = FALSE);
     current_user_type CONSTANT middleman_pub.user_type NOT NULL := (SELECT
       CASE
         WHEN (SELECT current_requester_id = user_id) THEN 'requester'
         WHEN (SELECT current_fulfiller_id = user_id) THEN 'fulfiller'
         WHEN (SELECT (
-              SELECT COUNT(*)
-              FROM middleman_pub.task AS current_task
-              WHERE current_task.fulfiller_id = user_id
-              AND current_task.status != 'finished'
-              ) = 0 AND is_client
+                SELECT COUNT(*)
+                FROM middleman_pub.task AS current_task
+                WHERE current_task.fulfiller_id = user_id
+                AND current_task.status != 'finished'
+                AND current_task.status != 'closed'
+                ) = 0
+                AND is_client
               ) THEN 'open fulfiller'
         ELSE 'none'
       END
     );
     can_update CONSTANT BOOLEAN := (SELECT
        (SELECT permission.can_update_to
-         FROM middleman_pub.task_permission AS permission
-           WHERE permission.current_status = current_task_status
-           AND permission.user_type = current_user_type
-           LIMIT 1
+          FROM middleman_pub.task_permission AS permission
+            WHERE permission.current_status = current_task_status
+            AND permission.user_type = current_user_type
+            LIMIT 1
        ) = new_task_status
     );
   BEGIN
-      IF can_update AND (current_user_type = 'requester' OR current_user_type = 'fulfiller') THEN
+      IF current_task_status = 'closed' OR current_task_status = 'finished' THEN
+        RAISE 'You cannot modify a closed or finished task';
+      ELSEIF can_update AND (current_user_type = 'requester' OR current_user_type = 'fulfiller') THEN
         UPDATE middleman_pub.task SET status = new_task_status
         WHERE id = task_id
         RETURNING * INTO task;
-      ELSEIF can_update AND current_user_type = 'open fulfiller' THEN
+      ELSEIF can_update AND (current_user_type = 'open fulfiller') THEN
         UPDATE middleman_pub.task SET (status, fulfiller_id) = (new_task_status, user_id)
         WHERE id = task_id
         RETURNING * INTO task;
