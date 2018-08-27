@@ -596,7 +596,7 @@ describe("user query", () => {
     const payload = {
       query: `mutation {
         addTaskReview(input: {
-          taskId: "${taskId2}",
+          newTaskId: "${taskId2}",
           newRating: 1
         }) {
           task {
@@ -620,7 +620,7 @@ describe("user query", () => {
     const payload = {
       query: `mutation {
         addTaskReview(input: {
-          taskId: "${taskId2}",
+          newTaskId: "${taskId2}",
           newRating: 1
         }) {
           task {
@@ -644,7 +644,7 @@ describe("user query", () => {
     const payload = {
       query: `mutation {
         addTaskReview(input: {
-          taskId: "${taskId2}",
+          newTaskId: "${taskId2}",
           newRating: 1
         }) {
           task {
@@ -661,7 +661,32 @@ describe("user query", () => {
       .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
-    console.log({ body: JSON.stringify(body) });
+    // console.log({ body: JSON.stringify(body) });
     expect(body).toHaveProperty(["data", "addTaskReview", "task", "id"]);
+  });
+
+  it("user should not be able to add a review on a reviewed task", async () => {
+    const payload = {
+      query: `mutation {
+        addTaskReview(input: {
+          newTaskId: "${taskId2}",
+          newRating: 1
+        }) {
+          task {
+            status
+            id
+            fulfillerId
+          }
+        }
+      }`
+    };
+
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${jwt}`)
+      .send(payload)
+      .expect(200);
+    // console.log({ body: JSON.stringify(body) });
+    expect(body).toHaveProperty(["errors"]);
   });
 });

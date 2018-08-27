@@ -153,7 +153,7 @@ CREATE TABLE middleman_pub.task (
   latitude REAL NOT NULL,
   scheduled_for TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   geog GEOMETRY,
-  rating SMALLINT,
+  fulfiller_rating SMALLINT,
   category middleman_pub.task_type NOT NULL,
   status middleman_pub.task_status NOT NULL DEFAULT 'opened',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -192,6 +192,22 @@ CREATE UNIQUE INDEX ON middleman_pub.task_detail (task_id, attribute);
 
 COMMENT ON TABLE middleman_pub.task_detail IS
   E'@omit all';
+
+CREATE TABLE middleman_pub.rating (
+  person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
+  task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
+  rating SMALLINT,
+  PRIMARY KEY (task_id, person_id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TRIGGER rating_updated_at BEFORE UPDATE
+  ON middleman_pub.rating
+  FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
+
+COMMENT ON TABLE middleman_pub.rating IS
+  E'@omit';
 
 -- CREATE TABLE middleman_pub.reply (
 --   id BIGSERIAL PRIMARY KEY,
@@ -441,23 +457,27 @@ COMMENT ON FUNCTION middleman_pub.update_task(BIGINT,middleman_pub.task_status) 
   'Update task status depending on permissions';
 
 CREATE FUNCTION middleman_pub.add_task_review(
-  task_id BIGINT,
+  new_task_id BIGINT,
   new_rating SMALLINT
 ) RETURNS middleman_pub.task AS $$
   DECLARE
     task middleman_pub.task;
     user_id CONSTANT BIGINT NOT NULL := current_setting('jwt.claims.person_id', true);
-    current_requester_id CONSTANT BIGINT := (SELECT current_task.requestor_id FROM middleman_pub.task AS current_task WHERE current_task.id = task_id LIMIT 1);
-    current_task_status CONSTANT middleman_pub.task_status NOT NULL := (SELECT current_task.status FROM middleman_pub.task AS current_task WHERE current_task.id = task_id LIMIT 1);
+    current_fulfiller_id CONSTANT BIGINT := (SELECT current_task.fulfiller_id FROM middleman_pub.task AS current_task WHERE current_task.id = new_task_id LIMIT 1);
+    current_requester_id CONSTANT BIGINT := (SELECT current_task.requestor_id FROM middleman_pub.task AS current_task WHERE current_task.id = new_task_id LIMIT 1);
+    current_task_status CONSTANT middleman_pub.task_status NOT NULL := (SELECT current_task.status FROM middleman_pub.task AS current_task WHERE current_task.id = new_task_id LIMIT 1);
+    not_reviewed CONSTANT BOOLEAN NOT NULL := (SELECT COUNT(*) FROM middleman_pub.rating AS rating WHERE rating.task_id = new_task_id) = 0;
     can_submit_review BOOLEAN NOT NULL := (
       (current_requester_id = user_id) AND
-      (current_task_status = 'finished')
+      (current_task_status = 'finished') AND
+      not_reviewed
     );
   BEGIN
     IF can_submit_review THEN
-      UPDATE middleman_pub.task SET rating = new_rating
-      WHERE id = task_id
-      RETURNING * into task;
+      INSERT INTO middleman_pub.rating (rating, person_id, task_id) VALUES
+      (new_rating, current_fulfiller_id, new_task_id);
+
+      SELECT * INTO task FROM middleman_pub.task WHERE id = new_task_id;
     ELSE
       RAISE 'no permission to update';
     END IF;
@@ -467,6 +487,14 @@ $$ LANGUAGE plpgsql STRICT SECURITY INVOKER VOLATILE;
 
 COMMENT ON FUNCTION middleman_pub.add_task_review(BIGINT,SMALLINT) IS
   'Add reviews to the task based on permissions';
+
+CREATE FUNCTION middleman_pub.person_rating(p middleman_pub.person)
+RETURNS NUMERIC AS $$
+  SELECT AVG(rating) FROM middleman_pub.rating WHERE person_id = p.id;
+$$ LANGUAGE SQL STABLE;
+
+COMMENT ON FUNCTION middleman_pub.person_rating(middleman_pub.person) IS
+  'average review of this person';
 
 -- comment functions
 
@@ -629,6 +657,7 @@ COMMENT ON FUNCTION middleman_pub.add_task_review(BIGINT,SMALLINT) IS
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_status) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.update_task(BIGINT,middleman_pub.task_status) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.add_task_review(BIGINT,SMALLINT) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.person_rating(middleman_pub.person) TO middleman_user, middleman_visitor;
 -- GRANT EXECUTE ON FUNCTION middleman_pub.create_new_comment(BIGINT, SMALLINT, TEXT) TO middleman_user;
 -- GRANT EXECUTE ON FUNCTION middleman_pub.comment_parent(BIGINT) TO middleman_user, middleman_visitor;
 -- GRANT EXECUTE ON FUNCTION middleman_pub.comment_child(BIGINT) TO middleman_user, middleman_visitor;
@@ -645,6 +674,7 @@ GRANT USAGE ON SEQUENCE middleman_pub.photo_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.task_id_seq TO middleman_user;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person TO middleman_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.rating TO middleman_admin;
 -- GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.reply TO middleman_admin;
 -- GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.reply_tree TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.phone TO middleman_admin;
@@ -657,6 +687,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_photo TO middle
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_permission TO middleman_admin;
 
 GRANT SELECT ON TABLE middleman_pub.person TO middleman_visitor, middleman_user;
+GRANT SELECT ON TABLE middleman_pub.rating TO middleman_visitor, middleman_user;
 -- GRANT SELECT ON TABLE middleman_pub.reply TO middleman_user, middleman_visitor;
 -- GRANT SELECT ON TABLE middleman_pub.reply_tree TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.phone TO middleman_user;
@@ -669,12 +700,13 @@ GRANT SELECT ON TABLE middleman_pub.task_photo TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.task_permission TO middleman_user;
 
 GRANT UPDATE, DELETE ON TABLE middleman_pub.person TO middleman_user;
+GRANT INSERT, UPDATE, DELETE ON TABLE middleman_pub.rating TO middleman_user;
 -- GRANT INSERT, UPDATE ON TABLE middleman_pub.reply TO middleman_user;
 -- GRANT INSERT, UPDATE ON TABLE middleman_pub.reply_tree TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.phone TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.photo TO middleman_user;
 GRANT INSERT ON TABLE middleman_pub.task TO middleman_user;
-GRANT UPDATE (status, fulfiller_id, longitude, latitude, scheduled_for, rating, geog, updated_at) ON TABLE middleman_pub.task TO middleman_user;
+GRANT UPDATE (status, fulfiller_id, longitude, latitude, scheduled_for, geog, updated_at) ON TABLE middleman_pub.task TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.task_detail TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_photo TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_type TO middleman_user;
