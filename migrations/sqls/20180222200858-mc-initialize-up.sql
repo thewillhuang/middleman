@@ -38,7 +38,6 @@ CREATE TABLE middleman_pub.person (
   id BIGSERIAL PRIMARY KEY,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
-  phone_id BIGINT REFERENCES middleman_pub.phone ON UPDATE CASCADE,
   longitude REAL NOT NULL DEFAULT 0,
   latitude REAL NOT NULL DEFAULT 0,
   geog GEOMETRY,
