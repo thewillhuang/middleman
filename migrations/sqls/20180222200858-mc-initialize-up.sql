@@ -196,7 +196,7 @@ COMMENT ON TABLE middleman_pub.task_detail IS
 CREATE TABLE middleman_pub.rating (
   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
-  rating SMALLINT,
+  rating SMALLINT NOT NULL,
   PRIMARY KEY (task_id, person_id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
