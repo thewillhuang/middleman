@@ -209,46 +209,6 @@ CREATE TRIGGER rating_updated_at BEFORE UPDATE
 COMMENT ON TABLE middleman_pub.rating IS
   E'@omit';
 
--- CREATE TABLE middleman_pub.reply (
---   id BIGSERIAL PRIMARY KEY,
---   commentary TEXT,
---   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
---   author_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
---   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
---   stars SMALLINT,
---   deleted BOOLEAN NOT NULL DEFAULT FALSE,
---   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
---   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
--- );
-
--- CREATE INDEX ON middleman_pub.reply (task_id);
--- CREATE INDEX ON middleman_pub.reply (person_id);
--- CREATE INDEX ON middleman_pub.reply (author_id);
-
--- CREATE TRIGGER comment_updated_at BEFORE UPDATE
---   ON middleman_pub.reply
---   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
-
--- COMMENT ON TABLE middleman_pub.reply IS
---   E'@omit all,delete';
-
--- CREATE TABLE middleman_pub.reply_tree (
---   parent_id BIGINT NOT NULL REFERENCES middleman_pub.reply ON UPDATE CASCADE,
---   child_id BIGINT NOT NULL REFERENCES middleman_pub.reply ON UPDATE CASCADE,
---   depth SMALLINT NOT NULL,
---   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
---   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
--- );
-
--- CREATE TRIGGER comment_tree_updated_at BEFORE UPDATE
---   ON middleman_pub.reply_tree
---   FOR EACH ROW EXECUTE PROCEDURE middleman_pub.set_updated_at_column();
-
--- COMMENT ON TABLE middleman_pub.reply_tree IS
---   E'@omit create,update,delete,filter,all';
-
--- ALTER TABLE middleman_pub.reply_tree ADD CONSTRAINT comment_tree_pkey PRIMARY KEY (parent_id, child_id);
-
 CREATE TABLE middleman_pub.person_type (
   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
   category middleman_pub.task_type NOT NULL,
@@ -496,178 +456,16 @@ $$ LANGUAGE SQL STABLE;
 COMMENT ON FUNCTION middleman_pub.person_rating(middleman_pub.person) IS
   'average review of this person';
 
--- comment functions
-
--- CREATE TABLE middleman_pub.reply (
---   id BIGSERIAL PRIMARY KEY,
---   commentary TEXT,
---   person_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
---   author_id BIGINT NOT NULL REFERENCES middleman_pub.person ON UPDATE CASCADE,
---   task_id BIGINT NOT NULL REFERENCES middleman_pub.task ON UPDATE CASCADE,
---   stars SMALLINT,
---   deleted BOOLEAN NOT NULL DEFAULT FALSE,
---   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
---   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
--- );
-
--- CREATE FUNCTION middleman_pub.register_person(
---   first_name TEXT,
---   last_name TEXT,
---   email TEXT,
---   password TEXT,
---   is_client BOOLEAN
--- ) RETURNS middleman_pub.person AS $$
--- DECLARE
---   person middleman_pub.person;
--- BEGIN
---   INSERT INTO middleman_pub.person (first_name, last_name, is_client) VALUES
---     (first_name, last_name, is_client)
---     RETURNING * INTO person;
-
---   INSERT INTO middleman_priv.person_account (person_id, email, password_hash) VALUES
---     (person.id, email, crypt(password, gen_salt('bf')));
-
---   RETURN person;
--- END;
--- $$ LANGUAGE plpgsql strict security definer;
-
--- CREATE FUNCTION middleman_pub.create_new_comment(
---   referring_task_id BIGINT,
---   person_stars SMALLINT DEFAULT NULL,
---   person_text TEXT DEFAULT NULL
--- ) RETURNS middleman_pub.reply AS $$
---   -- DECLARE
---   --   reply middleman_pub.reply;
---   --   current_person_id CONSTANT BIGINT NOT NULL := current_setting('jwt.claims.person_id', true);
---   --   task_person_id CONSTANT BIGINT NOT NULL := (SELECT fulfiller_id FROM middleman_pub.task WHERE id = task_id LIMIT 1);
---   --   task_status CONSTANT middleman_pub.task_status NOT NULL := (SELECT status FROM middleman_pub.task WHERE id = task_id LIMIT 1);
---   BEGIN
---     RAISE 'not allowed to comment on unfinished task';
---     -- IF task_status = 'finished' THEN
-
---     -- INSERT INTO middleman_pub.reply (task_id, stars, commentary, person_id, author_id)
---     --   VALUES (referring_task_id, person_stars, person_text, task_person_id, current_person_id)
---     --   RETURNING * INTO reply;
-
---     -- INSERT INTO middleman_pub.reply_tree (parent_id, child_id)
---     --   VALUES (reply.id, reply.id);
-
---     -- ELSE
---     --  RAISE 'not allowed to comment on unfinished task';
---     -- END IF;
---     -- raise notice 'current_person_id: %', current_person_id;
---     -- raise notice 'task_person_id: %', task_person_id;
-
---     -- IF commentary = NULL AND star = NULL THEN
---     --   RAISE 'at least one of commentary or star must have some value';
---     -- ELSEIF commentary != NULL AND star = NULL THEN
---     --   INSERT
---     --   INTO middleman_pub.reply (commentary, person_id, author_id)
---     --   VALUES (commentary, person_id, author_id)
---     --   RETURNING * INTO reply;
---     -- ELSEIF commentary = NULL AND star != NULL THEN
---     --   INSERT
---     --   INTO middleman_pub.reply (stars, person_id, author_id)
---     --   VALUES (star, person_id, author_id)
---     --   RETURNING * INTO reply;
---     -- ELSEIF commentary != NULL AND star != NULL THEN
---     --   INSERT
---     --   INTO middleman_pub.reply (stars, commentary, person_id, author_id)
---     --   VALUES (star, commentary, person_id, author_id)
---     --   RETURNING * INTO reply;
---     -- ELSE
---     --   RAISE 'error adding comment';
---     -- END IF;
---     RETURN reply;
-
---   END;
--- $$ LANGUAGE plpgsql STRICT;
-
--- COMMENT ON FUNCTION middleman_pub.create_new_comment(
---   BIGINT,
---   SMALLINT,
---   TEXT
--- ) IS 'create a comment based on current person and permissions';
-
--- CREATE FUNCTION middleman_pub.comment_child(
---   id BIGINT
--- ) RETURNS SETOF middleman_pub.reply AS $$
---     SELECT c.*
---     FROM middleman_pub.reply AS c
---       JOIN middleman_pub.reply_tree AS t ON c.id = t.child_id
---     WHERE t.parent_id = id;
--- $$ LANGUAGE sql STRICT STABLE;
-
--- COMMENT ON FUNCTION middleman_pub.comment_child(BIGINT) IS
---   'get the childs of comment by comment id';
-
--- CREATE FUNCTION middleman_pub.comment_parent(
---   id BIGINT
--- ) RETURNS SETOF middleman_pub.reply AS $$
---   SELECT c.*
---   FROM middleman_pub.reply AS c
---     JOIN middleman_pub.reply_tree AS t ON c.id = t.parent_id
---   WHERE t.child_id = id;
--- $$ LANGUAGE sql STRICT STABLE;
-
--- COMMENT ON FUNCTION middleman_pub.comment_parent(BIGINT) IS
---   'get the parents of comment by comment id';
-
--- CREATE FUNCTION middleman_pub.reply_with_comment(
---   parent_id BIGINT,
---   commentary TEXT
--- ) RETURNS void AS $$
---   DECLARE
---   author_id CONSTANT BIGINT := (SELECT id FROM current_person());
---   person_id CONSTANT BIGINT := (SELECT person_id FROM middleman_pub.reply WHERE id = parent_id);
---   task_id CONSTANT BIGINT := (SELECT task_id FROM middleman_pub.reply WHERE id = parent_id);
---   comment_id BIGINT;
---   BEGIN
---     WITH comment_id AS (
---       INSERT INTO middleman_pub.reply (commentary, author_id, person_id, task_id)
---       VALUES (commentary, author_id, person_id, task_id) RETURNING id
---     )
---     INSERT INTO middleman_pub.reply_tree (parent_id, child_id) (
---       SELECT t.parent_id, comment_id
---       FROM middleman_pub.reply_tree AS t
---       WHERE t.child_id = parent_id
---       UNION ALL (SELECT comment_id, comment_id)
---     );
---   END;
--- $$ LANGUAGE plpgsql STRICT SECURITY INVOKER VOLATILE;
-
--- COMMENT ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT) IS
---   'reply comment given parent comment id';
-
--- CREATE FUNCTION middleman_pub.remove_comment(
---   comment_id BIGINT
--- ) RETURNS middleman_pub.reply AS $$
---   BEGIN
---     UPDATE middleman_pub.reply
---     SET deleted = true
---     WHERE id = comment_id
---     RETURNING *;
---   END;
--- $$ LANGUAGE plpgsql STRICT SECURITY INVOKER VOLATILE;
-
--- COMMENT ON FUNCTION middleman_pub.remove_comment(BIGINT) IS
---   'delete comment by id';
-
 -- permissions
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_status) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.update_task(BIGINT,middleman_pub.task_status) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.add_task_review(BIGINT,SMALLINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.person_rating(middleman_pub.person) TO middleman_user, middleman_visitor;
--- GRANT EXECUTE ON FUNCTION middleman_pub.create_new_comment(BIGINT, SMALLINT, TEXT) TO middleman_user;
--- GRANT EXECUTE ON FUNCTION middleman_pub.comment_parent(BIGINT) TO middleman_user, middleman_visitor;
--- GRANT EXECUTE ON FUNCTION middleman_pub.comment_child(BIGINT) TO middleman_user, middleman_visitor;
--- GRANT EXECUTE ON FUNCTION middleman_pub.remove_comment(BIGINT) TO middleman_user;
--- GRANT EXECUTE ON FUNCTION middleman_pub.reply_with_comment(BIGINT, TEXT) TO middleman_user;
+
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.current_person() TO middleman_visitor, middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.register_person(TEXT, TEXT, TEXT, TEXT, BOOLEAN) TO middleman_visitor;
 
--- GRANT USAGE ON SEQUENCE middleman_pub.reply_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.person_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.phone_id_seq TO middleman_user;
 GRANT USAGE ON SEQUENCE middleman_pub.photo_id_seq TO middleman_user;
@@ -675,8 +473,6 @@ GRANT USAGE ON SEQUENCE middleman_pub.task_id_seq TO middleman_user;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.person TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.rating TO middleman_admin;
--- GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.reply TO middleman_admin;
--- GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.reply_tree TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.phone TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.photo TO middleman_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task TO middleman_admin;
@@ -688,8 +484,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE middleman_pub.task_permission TO m
 
 GRANT SELECT ON TABLE middleman_pub.person TO middleman_visitor, middleman_user;
 GRANT SELECT ON TABLE middleman_pub.rating TO middleman_visitor, middleman_user;
--- GRANT SELECT ON TABLE middleman_pub.reply TO middleman_user, middleman_visitor;
--- GRANT SELECT ON TABLE middleman_pub.reply_tree TO middleman_user, middleman_visitor;
 GRANT SELECT ON TABLE middleman_pub.phone TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.photo TO middleman_user;
 GRANT SELECT ON TABLE middleman_pub.task TO middleman_user;
@@ -701,8 +495,6 @@ GRANT SELECT ON TABLE middleman_pub.task_permission TO middleman_user;
 
 GRANT UPDATE, DELETE ON TABLE middleman_pub.person TO middleman_user;
 GRANT INSERT, UPDATE, DELETE ON TABLE middleman_pub.rating TO middleman_user;
--- GRANT INSERT, UPDATE ON TABLE middleman_pub.reply TO middleman_user;
--- GRANT INSERT, UPDATE ON TABLE middleman_pub.reply_tree TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.phone TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.photo TO middleman_user;
 GRANT INSERT ON TABLE middleman_pub.task TO middleman_user;
@@ -711,23 +503,6 @@ GRANT INSERT, UPDATE ON TABLE middleman_pub.task_detail TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_photo TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.person_type TO middleman_user;
 GRANT INSERT, UPDATE ON TABLE middleman_pub.task_photo TO middleman_user;
-
--- -- comment permission
--- ALTER TABLE middleman_pub.reply ENABLE ROW LEVEL SECURITY;
--- CREATE POLICY select_comment ON middleman_pub.reply FOR SELECT TO middleman_user, middleman_visitor
---   USING (true);
--- CREATE POLICY insert_comment ON middleman_pub.reply FOR INSERT TO middleman_user
---   -- WITH CHECK (
---   --   (person_id = current_setting('jwt.claims.person_id', true)::BIGINT) AND
---   --   ((SELECT status FROM middleman_pub.task WHERE id = task_id) = 'finished')
---   -- );
---   WITH CHECK (TRUE);
--- CREATE POLICY update_comment ON middleman_pub.reply FOR UPDATE TO middleman_user
---   -- USING (person_id = current_setting('jwt.claims.person_id', true)::BIGINT);
---   USING (TRUE);
--- CREATE POLICY delete_comment ON middleman_pub.reply FOR DELETE TO middleman_user
---   -- USING (person_id = current_setting('jwt.claims.person_id', true)::BIGINT);
---   USING (TRUE);
 
 -- person permission
 ALTER TABLE middleman_pub.person ENABLE ROW LEVEL SECURITY;
