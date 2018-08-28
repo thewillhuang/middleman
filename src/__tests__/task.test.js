@@ -3,7 +3,7 @@ import faker from "faker";
 import { POSTGRAPHQLCONFIG } from "../config/index";
 import app from "../server";
 
-describe("user query", () => {
+describe("task query", () => {
   const email = faker.internet.email();
   const password = faker.internet.password();
   const firstName = faker.name.firstName();
@@ -659,6 +659,7 @@ describe("user query", () => {
     expect(body).toHaveProperty(["errors"]);
   });
 
+  // task review tests
   it("driver should not be able to add a review at all", async () => {
     const payload = {
       query: `mutation {
@@ -757,6 +758,7 @@ describe("user query", () => {
     expect(body).toHaveProperty(["errors"]);
   });
 
+  // client review tests
   // ==========================================================
 
   it("user should not be able to add a review  of self at all", async () => {
