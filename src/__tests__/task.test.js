@@ -332,6 +332,73 @@ describe("user query", () => {
     driverId = body.data.currentPerson.id;
   });
 
+  const driverEmail2 = faker.internet.email();
+  const driverPassword2 = faker.internet.password();
+  const driverFirstName2 = faker.name.firstName();
+  const driverLastName2 = faker.name.lastName();
+  it("should be able to create a new driver", async () => {
+    const payload = {
+      query: `mutation {
+        registerPerson(input:{
+          firstName:"${driverFirstName2}",
+          lastName:"${driverLastName2}",
+          email:"${driverEmail2}",
+          password:"${driverPassword2}",
+          isClient: false
+        }) {
+          clientMutationId
+        }
+      }`
+    };
+    await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .send(payload)
+      .expect(200);
+  });
+
+  let driverJwt2;
+  it("should be able to login as a driver", async () => {
+    const payload = {
+      query: `query {
+        authenticate(
+          email:"${driverEmail2}",
+          password:"${driverPassword2}",
+        )
+      }`
+    };
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .send(payload)
+      .expect(200);
+    driverJwt2 = body.data.authenticate;
+    expect(body).toHaveProperty(["data", "authenticate"]);
+  });
+
+  let driverId2;
+  it("should be able to find driver using jwt", async () => {
+    const payload = {
+      query: `query {
+        currentPerson {
+            id,
+            firstName,
+            lastName
+            isClient,
+          }
+      }`
+    };
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${driverJwt2}`)
+      .send(payload)
+      .expect(200);
+    expect(body).toHaveProperty(["data", "currentPerson", "id"]);
+    expect(body).toHaveProperty(["data", "currentPerson", "isClient"]);
+    expect(body.data.currentPerson.firstName).toEqual(driverFirstName2);
+    expect(body.data.currentPerson.lastName).toEqual(driverLastName2);
+    expect(body.data.currentPerson.isClient).toEqual(false);
+    driverId2 = body.data.currentPerson.id;
+  });
+
   it("driver should be able to see tasks", async () => {
     const payload = {
       query: `query {
@@ -684,6 +751,106 @@ describe("user query", () => {
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .set("Authorization", `Bearer ${jwt}`)
+      .send(payload)
+      .expect(200);
+    // console.log({ body: JSON.stringify(body) });
+    expect(body).toHaveProperty(["errors"]);
+  });
+
+  // ==========================================================
+
+  it("user should not be able to add a review  of self at all", async () => {
+    const payload = {
+      query: `mutation {
+        addClientReview(input: {
+          newTaskId: "${taskId2}",
+          newRating: 1
+        }) {
+          task {
+            status
+            id
+            fulfillerId
+          }
+        }
+      }`
+    };
+
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${user2Jwt}`)
+      .send(payload)
+      .expect(200);
+    expect(body).toHaveProperty(["errors"]);
+  });
+
+  it("driver2 should not be able to add a client review on finished task", async () => {
+    const payload = {
+      query: `mutation {
+        addClientReview(input: {
+          newTaskId: "${taskId2}",
+          newRating: 1
+        }) {
+          task {
+            status
+            id
+            fulfillerId
+          }
+        }
+      }`
+    };
+
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${driverJwt2}`)
+      .send(payload)
+      .expect(200);
+    expect(body).toHaveProperty(["errors"]);
+  });
+
+  it("driver should be able to add a review on finished task", async () => {
+    const payload = {
+      query: `mutation {
+        addClientReview(input: {
+          newTaskId: "${taskId2}",
+          newRating: 1
+        }) {
+          task {
+            status
+            id
+            fulfillerId
+          }
+        }
+      }`
+    };
+
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${driverJwt}`)
+      .send(payload)
+      .expect(200);
+    // console.log({ body: JSON.stringify(body) });
+    expect(body).toHaveProperty(["data", "addClientReview", "task", "id"]);
+  });
+
+  it("driver should not be able to add a review on a reviewed task", async () => {
+    const payload = {
+      query: `mutation {
+        addClientReview(input: {
+          newTaskId: "${taskId2}",
+          newRating: 1
+        }) {
+          task {
+            status
+            id
+            fulfillerId
+          }
+        }
+      }`
+    };
+
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
     // console.log({ body: JSON.stringify(body) });

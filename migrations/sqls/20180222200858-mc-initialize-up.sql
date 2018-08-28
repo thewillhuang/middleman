@@ -415,6 +415,38 @@ $$ LANGUAGE plpgsql STRICT SECURITY INVOKER;
 COMMENT ON FUNCTION middleman_pub.update_task(BIGINT,middleman_pub.task_status) IS
   'Update task status depending on permissions';
 
+CREATE FUNCTION middleman_pub.add_client_review(
+  new_task_id BIGINT,
+  new_rating SMALLINT
+) RETURNS middleman_pub.task AS $$
+  DECLARE
+    task middleman_pub.task;
+    user_id CONSTANT BIGINT NOT NULL := current_setting('jwt.claims.person_id', true);
+    current_fulfiller_id CONSTANT BIGINT := (SELECT current_task.fulfiller_id FROM middleman_pub.task AS current_task WHERE current_task.id = new_task_id LIMIT 1);
+    current_requester_id CONSTANT BIGINT := (SELECT current_task.requestor_id FROM middleman_pub.task AS current_task WHERE current_task.id = new_task_id LIMIT 1);
+    current_task_status CONSTANT middleman_pub.task_status NOT NULL := (SELECT current_task.status FROM middleman_pub.task AS current_task WHERE current_task.id = new_task_id LIMIT 1);
+    not_reviewed CONSTANT BOOLEAN NOT NULL := (SELECT COUNT(*) FROM middleman_pub.rating AS rating WHERE rating.task_id = new_task_id AND rating.person_id = current_requester_id) = 0;
+    can_submit_review BOOLEAN NOT NULL := (
+      (current_fulfiller_id = user_id) AND
+      (current_task_status = 'finished') AND
+      not_reviewed
+    );
+  BEGIN
+    IF can_submit_review THEN
+      INSERT INTO middleman_pub.rating (rating, person_id, task_id) VALUES
+      (new_rating, current_requester_id, new_task_id);
+
+      SELECT * INTO task FROM middleman_pub.task WHERE id = new_task_id;
+    ELSE
+      RAISE 'no permission to update';
+    END IF;
+    RETURN task;
+  END;
+$$ LANGUAGE plpgsql STRICT SECURITY INVOKER VOLATILE;
+
+COMMENT ON FUNCTION middleman_pub.add_client_review(BIGINT,SMALLINT) IS
+  'Add reviews to requester of the task based on permissions';
+
 CREATE FUNCTION middleman_pub.add_task_review(
   new_task_id BIGINT,
   new_rating SMALLINT
@@ -425,7 +457,7 @@ CREATE FUNCTION middleman_pub.add_task_review(
     current_fulfiller_id CONSTANT BIGINT := (SELECT current_task.fulfiller_id FROM middleman_pub.task AS current_task WHERE current_task.id = new_task_id LIMIT 1);
     current_requester_id CONSTANT BIGINT := (SELECT current_task.requestor_id FROM middleman_pub.task AS current_task WHERE current_task.id = new_task_id LIMIT 1);
     current_task_status CONSTANT middleman_pub.task_status NOT NULL := (SELECT current_task.status FROM middleman_pub.task AS current_task WHERE current_task.id = new_task_id LIMIT 1);
-    not_reviewed CONSTANT BOOLEAN NOT NULL := (SELECT COUNT(*) FROM middleman_pub.rating AS rating WHERE rating.task_id = new_task_id) = 0;
+    not_reviewed CONSTANT BOOLEAN NOT NULL := (SELECT COUNT(*) FROM middleman_pub.rating AS rating WHERE rating.task_id = new_task_id AND rating.person_id = current_fulfiller_id) = 0;
     can_submit_review BOOLEAN NOT NULL := (
       (current_requester_id = user_id) AND
       (current_task_status = 'finished') AND
@@ -459,6 +491,7 @@ COMMENT ON FUNCTION middleman_pub.person_rating(middleman_pub.person) IS
 GRANT EXECUTE ON FUNCTION middleman_pub.tasks(REAL, REAL, middleman_pub.task_type[], middleman_pub.task_status) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.update_task(BIGINT,middleman_pub.task_status) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.add_task_review(BIGINT,SMALLINT) TO middleman_user;
+GRANT EXECUTE ON FUNCTION middleman_pub.add_client_review(BIGINT,SMALLINT) TO middleman_user;
 GRANT EXECUTE ON FUNCTION middleman_pub.person_rating(middleman_pub.person) TO middleman_user, middleman_visitor;
 
 GRANT EXECUTE ON FUNCTION middleman_pub.authenticate(TEXT, TEXT) TO middleman_visitor, middleman_user;
