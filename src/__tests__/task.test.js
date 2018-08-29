@@ -47,13 +47,15 @@ describe("task query", () => {
   });
 
   let id;
+  let userNodeId;
   it("should be able to find self using jwt", async () => {
     const payload = {
       query: `query {
         currentPerson {
-            id,
-            firstName,
+            id
+            firstName
             lastName
+            nodeId
           }
       }`
     };
@@ -66,6 +68,7 @@ describe("task query", () => {
     expect(body.data.currentPerson.firstName).toEqual(firstName);
     expect(body.data.currentPerson.lastName).toEqual(lastName);
     id = body.data.currentPerson.id;
+    userNodeId = body.data.currentPerson.nodeId;
   });
 
   const getRandomFloat = max => Math.random() * Math.floor(max);
@@ -265,6 +268,29 @@ describe("task query", () => {
     expect(body).toHaveProperty(["data", "authenticate"]);
   });
 
+  let userNodeId2;
+  it("should be able to find self using jwt", async () => {
+    const payload = {
+      query: `query {
+        currentPerson {
+            id
+            firstName
+            lastName
+            nodeId
+          }
+      }`
+    };
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${user2Jwt}`)
+      .send(payload)
+      .expect(200);
+    expect(body).toHaveProperty(["data", "currentPerson", "id"]);
+    expect(body.data.currentPerson.firstName).toEqual(firstName2);
+    expect(body.data.currentPerson.lastName).toEqual(lastName2);
+    userNodeId2 = body.data.currentPerson.nodeId;
+  });
+
   const driverEmail = faker.internet.email();
   const driverPassword = faker.internet.password();
   const driverFirstName = faker.name.firstName();
@@ -308,14 +334,16 @@ describe("task query", () => {
   });
 
   let driverId;
+  let driverNodeId;
   it("should be able to find driver using jwt", async () => {
     const payload = {
       query: `query {
         currentPerson {
-            id,
-            firstName,
+            id
+            nodeId
+            firstName
             lastName
-            isClient,
+            isClient
           }
       }`
     };
@@ -330,6 +358,7 @@ describe("task query", () => {
     expect(body.data.currentPerson.lastName).toEqual(driverLastName);
     expect(body.data.currentPerson.isClient).toEqual(false);
     driverId = body.data.currentPerson.id;
+    driverNodeId = body.data.currentPerson.nodeId;
   });
 
   const driverEmail2 = faker.internet.email();
@@ -375,14 +404,16 @@ describe("task query", () => {
   });
 
   let driverId2;
+  let driverNodeId2;
   it("should be able to find driver using jwt", async () => {
     const payload = {
       query: `query {
         currentPerson {
-            id,
-            firstName,
+            id
+            firstName
             lastName
-            isClient,
+            isClient
+            nodeId
           }
       }`
     };
@@ -397,6 +428,7 @@ describe("task query", () => {
     expect(body.data.currentPerson.lastName).toEqual(driverLastName2);
     expect(body.data.currentPerson.isClient).toEqual(false);
     driverId2 = body.data.currentPerson.id;
+    driverNodeId2 = body.data.currentPerson.nodeId;
   });
 
   it("driver should be able to see tasks", async () => {
@@ -857,5 +889,85 @@ describe("task query", () => {
       .expect(200);
     // console.log({ body: JSON.stringify(body) });
     expect(body).toHaveProperty(["errors"]);
+  });
+
+  it("driver 2 should not have a rating", async () => {
+    const payload = {
+      query: `query {
+        person(nodeId: "${driverNodeId2}") {
+          rating
+        }
+      }`
+    };
+
+    console.log(driverNodeId2);
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${driverJwt}`)
+      .send(payload)
+      .expect(200);
+    console.log({ body: JSON.stringify(body) });
+    expect(body).toHaveProperty(["data", "person", "rating"]);
+    expect(body.data.person.rating).toBe(null);
+  });
+
+  it("driver 1 should have a rating", async () => {
+    const payload = {
+      query: `query {
+        person(nodeId: "${driverNodeId}") {
+          rating
+        }
+      }`
+    };
+
+    console.log(driverNodeId2);
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${driverJwt}`)
+      .send(payload)
+      .expect(200);
+    console.log({ body: JSON.stringify(body) });
+    expect(body).toHaveProperty(["data", "person", "rating"]);
+    expect(parseInt(body.data.person.rating)).toBe(1);
+  });
+
+  it("user 1 should have a rating", async () => {
+    const payload = {
+      query: `query {
+        person(nodeId: "${userNodeId}") {
+          rating
+        }
+      }`
+    };
+
+    // console.log(driverNodeId2);
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${driverJwt}`)
+      .send(payload)
+      .expect(200);
+    console.log({ body: JSON.stringify(body) });
+    expect(body).toHaveProperty(["data", "person", "rating"]);
+    expect(parseInt(body.data.person.rating)).toBe(1);
+  });
+
+  it("user 2 should not have a rating", async () => {
+    const payload = {
+      query: `query {
+        person(nodeId: "${userNodeId2}") {
+          rating
+        }
+      }`
+    };
+
+    console.log(driverNodeId2);
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${driverJwt}`)
+      .send(payload)
+      .expect(200);
+    console.log({ body: JSON.stringify(body) });
+    expect(body).toHaveProperty(["data", "person", "rating"]);
+    expect(body.data.person.rating).toBe(null);
   });
 });
