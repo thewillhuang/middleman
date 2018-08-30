@@ -41,7 +41,6 @@ export const PGCONFIG = {
 export const POSTGRAPHQLCONFIG = {
   dynamicJson: true,
   graphiql: true,
-  // watchPg: isDevelopment,
   graphqlRoute: "/",
   enableQueryBatching: true,
   ignoreRBAC: false,
