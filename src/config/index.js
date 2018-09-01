@@ -5,7 +5,7 @@ import ca from "./rds-combined-ca-bundle.pem";
 
 const {
   PORT = 3000,
-  DATABASE = "middleman",
+  DATABASE = "m",
   NODE_ENV = "development",
   JWT_SECRET = "lololol",
   DB_URL = `postgresql://williamhuang@localhost/${DATABASE}`

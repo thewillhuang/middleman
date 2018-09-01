@@ -9,4 +9,4 @@ services:
     image: mdillon/postgis
     environment:
       POSTGRES_USER: "williamhuang"
-      POSTGRES_DB: "middleman"
+      POSTGRES_DB: "m"

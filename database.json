@@ -4,13 +4,13 @@
     "user": "williamhuang",
     "password": "",
     "host": "localhost",
-    "database": "middleman"
+    "database": "m"
   },
   "test": {
     "driver": "pg",
     "user": "williamhuang",
     "host": "db",
-    "database": "middleman"
+    "database": "m"
   },
   "sql-file": true
 }
