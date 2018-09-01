@@ -900,7 +900,7 @@ describe("task query", () => {
       }`
     };
 
-    console.log(driverNodeId2);
+    // console.log(driverNodeId2);
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .set("Authorization", `Bearer ${driverJwt}`)
