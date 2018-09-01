@@ -108,7 +108,9 @@ CREATE TYPE middleman_pub.task_type AS ENUM (
   'pet bnb',
   'photoshop',
   'storage pickup',
-  'junk dump'
+  'junk dump',
+  'charity pickup',
+  'trucking'
 );
 
 CREATE TYPE middleman_pub.task_attribute AS ENUM (
