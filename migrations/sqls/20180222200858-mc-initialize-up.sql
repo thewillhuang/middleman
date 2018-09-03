@@ -210,25 +210,10 @@ CREATE TRIGGER rating_updated_at BEFORE UPDATE
 COMMENT ON TABLE m_pub.rating IS
   E'@omit';
 
-CREATE TABLE m_pub.person_type (
-  person_id BIGINT NOT NULL REFERENCES m_pub.person ON UPDATE CASCADE,
-  category m_pub.task_type NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TRIGGER person_type_updated_at BEFORE UPDATE
-  ON m_pub.person_type
-  FOR EACH ROW EXECUTE PROCEDURE m_pub.set_updated_at_column();
-
-CREATE UNIQUE INDEX ON m_pub.person_type (person_id, category);
-
-COMMENT ON TABLE m_pub.person_type IS
-  E'@omit create,update,delete,filter,all';
-
 CREATE TABLE m_pub.person_photo (
   person_id BIGINT NOT NULL REFERENCES m_pub.person ON UPDATE CASCADE,
   photo_id BIGINT NOT NULL REFERENCES m_pub.photo ON UPDATE CASCADE,
+  PRIMARY KEY (person_id, photo_id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -245,6 +230,7 @@ COMMENT ON TABLE m_pub.person_photo IS
 CREATE TABLE m_pub.task_photo (
   task_id BIGINT NOT NULL REFERENCES m_pub.task ON UPDATE CASCADE,
   photo_id BIGINT NOT NULL REFERENCES m_pub.photo ON UPDATE CASCADE,
+  PRIMARY KEY (task_id, photo_id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -512,7 +498,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.photo TO m_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.task TO m_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.task_detail TO m_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.person_photo TO m_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.person_type TO m_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.task_photo TO m_admin;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE m_pub.task_permission TO m_admin;
 
@@ -523,7 +508,6 @@ GRANT SELECT ON TABLE m_pub.photo TO m_user;
 GRANT SELECT ON TABLE m_pub.task TO m_user;
 GRANT SELECT ON TABLE m_pub.task_detail TO m_user;
 GRANT SELECT ON TABLE m_pub.person_photo TO m_user;
-GRANT SELECT ON TABLE m_pub.person_type TO m_user;
 GRANT SELECT ON TABLE m_pub.task_photo TO m_user;
 GRANT SELECT ON TABLE m_pub.task_permission TO m_user;
 
@@ -535,7 +519,6 @@ GRANT INSERT ON TABLE m_pub.task TO m_user;
 GRANT UPDATE (status, fulfiller_id, longitude, latitude, scheduled_for, geog, updated_at) ON TABLE m_pub.task TO m_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.task_detail TO m_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.person_photo TO m_user;
-GRANT INSERT, UPDATE ON TABLE m_pub.person_type TO m_user;
 GRANT INSERT, UPDATE ON TABLE m_pub.task_photo TO m_user;
 
 -- person permission
