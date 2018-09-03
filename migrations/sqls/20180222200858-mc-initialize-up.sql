@@ -319,7 +319,7 @@ BEGIN
     RETURN NULL;
   END IF;
 END;
-$$ LANGUAGE plpgsql STRICT STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STRICT SECURITY DEFINER;
 
 COMMENT ON FUNCTION m_pub.authenticate(TEXT, TEXT) IS
   'Creates a JWT token that will securely identify a person and give them certain permissions.';

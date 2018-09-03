@@ -31,18 +31,20 @@ describe("task query", () => {
   let jwt;
   it("should be able to get a jwt from email and password", async () => {
     const payload = {
-      query: `query {
-        authenticate(
+      query: `mutation {
+        authenticate(input:{
           email:"${email}",
           password:"${password}",
-        )
+        }) {
+          jwtToken
+        }
       }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
-    jwt = body.data.authenticate;
+    jwt = body.data.authenticate.jwtToken;
     expect(body).toHaveProperty(["data", "authenticate"]);
   });
 
@@ -253,18 +255,21 @@ describe("task query", () => {
   let user2Jwt;
   it("should be able to login as user2", async () => {
     const payload = {
-      query: `query {
-        authenticate(
+      query: `mutation {
+        authenticate(input:{
           email:"${email2}",
           password:"${password2}",
-        )
+        })
+        {
+          jwtToken
+        }
       }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
-    user2Jwt = body.data.authenticate;
+    user2Jwt = body.data.authenticate.jwtToken;
     expect(body).toHaveProperty(["data", "authenticate"]);
   });
 
@@ -318,18 +323,20 @@ describe("task query", () => {
   let driverJwt;
   it("should be able to login as a driver", async () => {
     const payload = {
-      query: `query {
-        authenticate(
+      query: `mutation {
+        authenticate(input:{
           email:"${driverEmail}",
           password:"${driverPassword}",
-        )
+        }) {
+          jwtToken
+        }
       }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
-    driverJwt = body.data.authenticate;
+    driverJwt = body.data.authenticate.jwtToken;
     expect(body).toHaveProperty(["data", "authenticate"]);
   });
 
@@ -388,18 +395,20 @@ describe("task query", () => {
   let driverJwt2;
   it("should be able to login as a driver", async () => {
     const payload = {
-      query: `query {
-        authenticate(
+      query: `mutation {
+        authenticate(input: {
           email:"${driverEmail2}",
           password:"${driverPassword2}",
-        )
+        }) {
+          jwtToken
+        }
       }`
     };
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send(payload)
       .expect(200);
-    driverJwt2 = body.data.authenticate;
+    driverJwt2 = body.data.authenticate.jwtToken;
     expect(body).toHaveProperty(["data", "authenticate"]);
   });
 
