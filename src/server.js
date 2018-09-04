@@ -1,6 +1,6 @@
 import express from "express";
 import { postgraphile } from "postgraphile";
-// import morgan from 'morgan';
+import morgan from "morgan";
 import cachedPool from "./cachedPool";
 import {
   POSTGRAPHQLCONFIG,
@@ -11,9 +11,9 @@ import {
 
 const app = express();
 
-// if (isDevelopment) {
-//   app.use(morgan('dev'));
-// }
+if (isDevelopment) {
+  app.use(morgan("dev"));
+}
 
 app.get("/", (req, res) => {
   res.send("pong");

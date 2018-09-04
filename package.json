@@ -9,7 +9,7 @@
     "postgraphile": "4.0.0-rc.4"
   },
   "scripts": {
-    "dev": "yarn clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql,json --exec 'yarn builddev'",
+    "dev": "yarn clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql --exec 'yarn builddev'",
     "prebuilddev": "yarn db:r",
     "builddev": "NODE_ENV=development node dist/main.js",
     "backup": "mv ./node_modules/ ./node_modules_bak/ && mv ./.yarnclean_bak ./.yarnclean",

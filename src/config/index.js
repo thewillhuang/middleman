@@ -92,4 +92,9 @@ if (isDevelopment) {
     "../../dist",
     "schema.graphql"
   );
+  POSTGRAPHQLCONFIG.exportJsonSchemaPath = join(
+    __dirname,
+    "../../dist",
+    "schema.json"
+  );
 }
