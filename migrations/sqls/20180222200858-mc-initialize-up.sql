@@ -110,7 +110,31 @@ CREATE TYPE m_pub.task_type AS ENUM (
   'storage pickup',
   'junk dump',
   'charity pickup',
-  'trucking'
+  'trucking',
+  'Food delivery',
+  'Weed delivery',
+  'Car light switching',
+  'Car oil change',
+  'Equipment maintenance schedule for companies',
+  'Pet hair cutting ',
+  'Pet services',
+  'Pet walking',
+  'Car towing',
+  'Tire changing',
+  'Gas refilling',
+  'Car rentals',
+  'Rv rentals',
+  'Boat rentals',
+  'Gear rentals',
+  'Used car selling',
+  'Pet Bnb',
+  'Car detailing ',
+  'Car windshield swap',
+  'Car delivery',
+  'Car battery switch',
+  'road side assistance',
+  'Ecommerce delivery',
+  'Grocery delivery'
 );
 
 CREATE TYPE m_pub.task_attribute AS ENUM (
