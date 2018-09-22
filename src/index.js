@@ -1,5 +1,5 @@
-import app from './server';
-import { APPPORT as PORT, ENV } from './config/index';
+import app from "./server";
+import { APPPORT as PORT, ENV } from "./config/index";
 
 app.listen(PORT);
 

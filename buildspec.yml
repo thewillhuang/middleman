@@ -3,4 +3,4 @@ version: 0.2
 phases:
   install:
     commands:
-        - docker-compose down && docker-compose build && docker-compose up --exit-code-from webapp
+      - docker-compose down && docker-compose build && docker-compose up --exit-code-from webapp

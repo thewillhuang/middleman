@@ -1,9 +1,9 @@
-import request from 'supertest';
-import app from '../server';
-import { POSTGRAPHQLCONFIG } from '../config/index';
+import request from "supertest";
+import app from "../server";
+import { POSTGRAPHQLCONFIG } from "../config/index";
 
-describe('introspection query', () => {
-  it('should not fail', async () => {
+describe("introspection query", () => {
+  it("should not fail", async () => {
     await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .send({
@@ -99,7 +99,7 @@ describe('introspection query', () => {
             }
           }
         }
-      `,
+      `
       })
       .expect(200);
   });

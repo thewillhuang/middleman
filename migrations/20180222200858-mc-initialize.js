@@ -1,10 +1,10 @@
-'use strict';
+"use strict";
 
 var dbm;
 var type;
 var seed;
-var fs = require('fs');
-var path = require('path');
+var fs = require("fs");
+var path = require("path");
 var Promise;
 
 /**
@@ -21,13 +21,13 @@ exports.setup = function(options, seedLink) {
 exports.up = function(db) {
   var filePath = path.join(
     __dirname,
-    'sqls',
-    '20180222200858-mc-initialize-up.sql'
+    "sqls",
+    "20180222200858-mc-initialize-up.sql"
   );
   return new Promise(function(resolve, reject) {
-    fs.readFile(filePath, { encoding: 'utf-8' }, function(err, data) {
+    fs.readFile(filePath, { encoding: "utf-8" }, function(err, data) {
       if (err) return reject(err);
-      console.log('received data: ' + data);
+      console.log("received data: " + data);
 
       resolve(data);
     });
@@ -39,13 +39,13 @@ exports.up = function(db) {
 exports.down = function(db) {
   var filePath = path.join(
     __dirname,
-    'sqls',
-    '20180222200858-mc-initialize-down.sql'
+    "sqls",
+    "20180222200858-mc-initialize-down.sql"
   );
   return new Promise(function(resolve, reject) {
-    fs.readFile(filePath, { encoding: 'utf-8' }, function(err, data) {
+    fs.readFile(filePath, { encoding: "utf-8" }, function(err, data) {
       if (err) return reject(err);
-      console.log('received data: ' + data);
+      console.log("received data: " + data);
 
       resolve(data);
     });
@@ -55,5 +55,5 @@ exports.down = function(db) {
 };
 
 exports._meta = {
-  version: 1,
+  version: 1
 };

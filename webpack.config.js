@@ -1,19 +1,19 @@
-const webpack = require('webpack');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const webpack = require("webpack");
+const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 
 const config = {
-  target: 'node',
+  target: "node",
 
   entry: {
-    main: './src',
-    makeCache: './src/makeCache.js',
+    main: "./src",
+    makeCache: "./src/makeCache.js"
   },
 
   node: {
-    __dirname: true,
+    __dirname: true
   },
 
-  mode: 'production',
+  mode: "production",
 
   optimization: {
     minimizer: [
@@ -22,14 +22,14 @@ const config = {
         uglifyOptions: {
           keep_fnames: true,
           output: {
-            comments: false,
+            comments: false
           },
           compress: {
-            drop_console: true,
-          },
-        },
-      }),
-    ],
+            drop_console: true
+          }
+        }
+      })
+    ]
   },
 
   module: {
@@ -38,20 +38,17 @@ const config = {
         test: /\.js$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',
-        },
+          loader: "babel-loader"
+        }
       },
       {
         test: /\.(pem|txt|sql)$/,
-        use: 'raw-loader',
-      },
-    ],
+        use: "raw-loader"
+      }
+    ]
   },
 
-  plugins: [
-    new webpack.IgnorePlugin(/\.\/native/, /\/pg\//),
-  ],
-
+  plugins: [new webpack.IgnorePlugin(/\.\/native/, /\/pg\//)]
 };
 
 module.exports = config;
