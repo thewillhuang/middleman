@@ -137,15 +137,6 @@ CREATE TYPE m_pub.task_type AS ENUM (
   'Grocery delivery'
 );
 
-CREATE TYPE m_pub.task_attribute AS ENUM (
-  'car make',
-  'car model',
-  'car year',
-  'car license plate',
-  'car color',
-  'direction notes'
-);
-
 CREATE TYPE m_pub.user_type AS ENUM (
   'fulfiller',
   'requester',
@@ -202,8 +193,8 @@ COMMENT ON TABLE m_pub.task IS
 
 CREATE TABLE m_pub.task_detail (
   task_id BIGINT NOT NULL REFERENCES m_pub.task ON UPDATE CASCADE,
-  attribute m_pub.task_attribute NOT NULL,
-  detail TEXT NOT NULL,
+  attribute TEXT NOT NULL,
+  value TEXT NOT NULL,
   PRIMARY KEY (task_id, attribute),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
