@@ -6133,10 +6133,10 @@ postgraphile-core@4.1.0-rc.0:
     graphile-build "4.1.0-rc.0"
     graphile-build-pg "4.1.0-rc.0"
 
-postgraphile@^4.1.0-rc.0:
-  version "4.1.0-rc.0"
-  resolved "https://registry.yarnpkg.com/postgraphile/-/postgraphile-4.1.0-rc.0.tgz#6a4c2bb2c0951b6e7e1db4caab305cc244e67b7d"
-  integrity sha512-Z6tnc0SN7Uqa7fw/XcoEeb221ZxD728AczrMEYUvxhTWQVb0yFpk011im82F9SDrgn7u0AkdZtOAbTfLr8Yf0A==
+postgraphile@^4.1.0-rc.1:
+  version "4.1.0-rc.1"
+  resolved "https://registry.yarnpkg.com/postgraphile/-/postgraphile-4.1.0-rc.1.tgz#4a51f1238d329da8b8ea91323699df49fa1fdf64"
+  integrity sha512-bnHBQR4DHiMooaET87dmSjonaKZWS7qcCoF7VxqRENNOItbidOrkDL8BMe3OkmV0e8Hg67d8K+2iByEEuJv0aQ==
   dependencies:
     "@types/graphql" "^14.0.3"
     "@types/jsonwebtoken" "<7.2.1"
