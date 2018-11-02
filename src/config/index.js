@@ -44,8 +44,9 @@ export const POSTGRAPHQLCONFIG = {
   graphqlRoute: "/",
   enableQueryBatching: true,
   ignoreRBAC: false,
+  ignoreIndex: false,
   includeExtensionResources: false,
-  disableQueryLog: isProduction,
+  disableQueryLog: isProduction || isTest,
   extendedErrors: [
     "severity",
     "code",
