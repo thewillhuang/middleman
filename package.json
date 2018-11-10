@@ -22,7 +22,7 @@
     "open": "up url -o",
     "test": "jest --forceExit",
     "test:docker": "docker-compose down && docker-compose build && docker-compose up --exit-code-from webapp",
-    "test:local": "NODE_ENV=development jest --verbose --forceExit",
+    "test:local": "yarn db:r; NODE_ENV=development jest --verbose --forceExit",
     "logs": "up logs -f",
     "db:create": "createdb m",
     "db:drop": "dropdb m",
