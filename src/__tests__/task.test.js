@@ -129,6 +129,9 @@ describe("task query", () => {
       .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
+    console.log({
+      "should be able to find nearby tasks": JSON.stringify(body)
+    });
     totalCount = body.data.tasks.totalCount;
   });
 
@@ -440,11 +443,14 @@ describe("task query", () => {
     driverNodeId2 = body.data.currentPerson.nodeId;
   });
 
+  let cursor;
+  let expectedCursor;
   it("driver should be able to see tasks", async () => {
     const payload = {
       query: `query {
         tasks(longitude:${longitude}, latitude: ${latitude}, taskTypes:[${category}]) {
           edges {
+            cursor
             node {
               id
               category
@@ -461,7 +467,34 @@ describe("task query", () => {
       .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
-    // console.log({ body: JSON.stringify(body), driverJwt });
+    cursor = body.data.tasks.edges[0].cursor;
+    expectedCursor = body.data.tasks.edges[1].cursor;
+    expect(body.data.tasks.totalCount).toBeGreaterThan(totalCount);
+  });
+
+  it("driver should be able to paginate tasks", async () => {
+    const payload = {
+      query: `query {
+        tasks(longitude:${longitude}, latitude: ${latitude}, taskTypes:[${category}], first:1, after:"${cursor}") {
+          edges {
+            cursor
+            node {
+              id
+              category
+              nodeId
+              status
+            }
+          },
+          totalCount
+        }
+      }`
+    };
+    const { body } = await request(app)
+      .post(POSTGRAPHQLCONFIG.graphqlRoute)
+      .set("Authorization", `Bearer ${driverJwt}`)
+      .send(payload)
+      .expect(200);
+    expect(body.data.tasks.edges[0].cursor).toBe(expectedCursor);
     expect(body.data.tasks.totalCount).toBeGreaterThan(totalCount);
   });
 
@@ -485,7 +518,6 @@ describe("task query", () => {
       .set("Authorization", `Bearer ${user2Jwt}`)
       .send(payload)
       .expect(200);
-    // console.log({body: JSON.stringify(body)})
     expect(body).toHaveProperty(["errors"]);
   });
 
@@ -511,7 +543,6 @@ describe("task query", () => {
       .expect(200);
     expect(body).toHaveProperty(["data", "updateTask", "task", "id"]);
     expect(body).toHaveProperty(["data", "updateTask", "task", "status"]);
-    // console.log({ status: body.data.updateTask.task.status });
   });
 
   it("driver should not be able to mark a closed job (task1) as taken", async () => {
@@ -557,7 +588,6 @@ describe("task query", () => {
       .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
-    // console.log({ body: JSON.stringify(body) });
     expect(body).toHaveProperty(["errors"]);
   });
 
@@ -574,8 +604,6 @@ describe("task query", () => {
         }
       }`
     };
-
-    // console.log({ payload });
 
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
@@ -650,7 +678,6 @@ describe("task query", () => {
       .set("Authorization", `Bearer ${user2Jwt}`)
       .send(payload)
       .expect(200);
-    // console.log({error: body})
     expect(body).toHaveProperty(["errors"]);
   });
 
@@ -770,7 +797,6 @@ describe("task query", () => {
       .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
-    // console.log({ body: JSON.stringify(body) });
     expect(body).toHaveProperty(["data", "addTaskReview", "task", "id"]);
   });
 
@@ -795,7 +821,6 @@ describe("task query", () => {
       .set("Authorization", `Bearer ${jwt}`)
       .send(payload)
       .expect(200);
-    // console.log({ body: JSON.stringify(body) });
     expect(body).toHaveProperty(["errors"]);
   });
 
@@ -871,7 +896,6 @@ describe("task query", () => {
       .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
-    // console.log({ body: JSON.stringify(body) });
     expect(body).toHaveProperty(["data", "addClientReview", "task", "id"]);
   });
 
@@ -896,7 +920,6 @@ describe("task query", () => {
       .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
-    // console.log({ body: JSON.stringify(body) });
     expect(body).toHaveProperty(["errors"]);
   });
 
@@ -909,13 +932,11 @@ describe("task query", () => {
       }`
     };
 
-    // console.log(driverNodeId2);
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
-    console.log({ body: JSON.stringify(body) });
     expect(body).toHaveProperty(["data", "person", "rating"]);
     expect(body.data.person.rating).toBe(null);
   });
@@ -929,13 +950,11 @@ describe("task query", () => {
       }`
     };
 
-    console.log(driverNodeId2);
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
-    console.log({ body: JSON.stringify(body) });
     expect(body).toHaveProperty(["data", "person", "rating"]);
     expect(parseInt(body.data.person.rating)).toBe(1);
   });
@@ -949,13 +968,11 @@ describe("task query", () => {
       }`
     };
 
-    // console.log(driverNodeId2);
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
-    console.log({ body: JSON.stringify(body) });
     expect(body).toHaveProperty(["data", "person", "rating"]);
     expect(parseInt(body.data.person.rating)).toBe(1);
   });
@@ -969,13 +986,11 @@ describe("task query", () => {
       }`
     };
 
-    console.log(driverNodeId2);
     const { body } = await request(app)
       .post(POSTGRAPHQLCONFIG.graphqlRoute)
       .set("Authorization", `Bearer ${driverJwt}`)
       .send(payload)
       .expect(200);
-    console.log({ body: JSON.stringify(body) });
     expect(body).toHaveProperty(["data", "person", "rating"]);
     expect(body.data.person.rating).toBe(null);
   });

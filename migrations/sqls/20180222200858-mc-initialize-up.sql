@@ -362,12 +362,20 @@ CREATE FUNCTION m_pub.tasks(
   task_types m_pub.task_type[],
   task_status m_pub.task_status DEFAULT 'opened'
 ) RETURNS SETOF m_pub.task AS $$
-  SELECT *
-  FROM m_pub.task
-  WHERE m_pub.task.status = task_status
-  AND m_pub.task.category = ANY (task_types)
-  ORDER BY m_pub.task.geog <-> concat('SRID=4326;POINT(', longitude, ' ', latitude, ')');
-$$ LANGUAGE SQL STRICT STABLE;
+  DECLARE
+   _latitude CONSTANT REAL := latitude;
+   _longitude CONSTANT REAL := longitude;
+   _task_types CONSTANT m_pub.task_type[] := task_types;
+   _task_status CONSTANT m_pub.task_status := task_status;
+  BEGIN
+    RETURN QUERY
+      SELECT *
+      FROM m_pub.task
+      WHERE m_pub.task.status = _task_status
+      AND m_pub.task.category = ANY (_task_types)
+      ORDER BY m_pub.task.geog <-> concat('SRID=4326;POINT(', _longitude, ' ', _latitude, ')');
+  END;
+$$ LANGUAGE plpgsql STRICT STABLE;
 
 COMMENT ON FUNCTION m_pub.tasks(REAL, REAL, m_pub.task_type[], m_pub.task_status) IS
   'Gets the nearest open tasks given longitude latitude and task type ordered by distance';
