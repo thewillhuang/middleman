@@ -211,8 +211,6 @@ CREATE TRIGGER task_detail_updated_at BEFORE UPDATE
   ON m_pub.task_detail
   FOR EACH ROW EXECUTE PROCEDURE m_pub.set_updated_at_column();
 
-CREATE UNIQUE INDEX ON m_pub.task_detail (task_id, attribute);
-
 COMMENT ON TABLE m_pub.task_detail IS
   E'@omit all';
 
@@ -240,8 +238,6 @@ CREATE TABLE m_pub.person_photo (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX ON m_pub.person_photo (person_id, photo_id);
-
 CREATE TRIGGER person_photo_updated_at BEFORE UPDATE
   ON m_pub.person_photo
   FOR EACH ROW EXECUTE PROCEDURE m_pub.set_updated_at_column();
@@ -256,8 +252,6 @@ CREATE TABLE m_pub.task_photo (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE UNIQUE INDEX ON m_pub.task_photo (task_id, photo_id);
 
 CREATE TRIGGER task_photo_updated_at BEFORE UPDATE
   ON m_pub.task_photo
