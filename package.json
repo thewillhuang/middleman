@@ -6,7 +6,7 @@
   "author": "William Huang <will.h86@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "postgraphile": "^4.1.0-rc.1"
+    "postgraphile": "^4.3.0"
   },
   "scripts": {
     "dev": "yarn clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql --exec 'yarn builddev'",
