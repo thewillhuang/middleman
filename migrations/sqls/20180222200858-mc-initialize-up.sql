@@ -122,6 +122,15 @@ CREATE TYPE m_pub.task_type AS ENUM (
   'maid',
   'massage',
   'medical tourism',
+  'dental splints',
+  'dental custom impression trays',
+  'dental guards',
+  'dental models',
+  'dental denture',
+  'dental surgical guide',
+  'dental bridge',
+  'dental crown',
+  'dental aligners',
   'pet bnb',
   'pet hair cutting ',
   'pet services',
@@ -280,6 +289,36 @@ COMMENT ON COLUMN m_priv.person_account.email IS
   'The email address of the person.';
 COMMENT ON COLUMN m_priv.person_account.password_hash IS
   'An opaque hash of the person’s password.';
+
+CREATE TABLE m_pub.company (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  phone_id BIGINT NOT NULL REFERENCES m_pub.phone ON UPDATE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TRIGGER company_updated_at BEFORE UPDATE
+  ON m_pub.company
+  FOR EACH ROW EXECUTE PROCEDURE m_pub.set_updated_at_column();
+
+COMMENT ON TABLE m_pub.company IS
+  E'@omit create,update,delete,filter,all';
+
+CREATE TABLE m_pub.company_person (
+  company_id BIGINT NOT NULL REFERENCES m_pub.company ON UPDATE CASCADE,
+  person_id BIGINT NOT NULL REFERENCES m_pub.person ON UPDATE CASCADE,
+  PRIMARY KEY (company_id, person_id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TRIGGER company_person_updated_at BEFORE UPDATE
+  ON m_pub.company_person
+  FOR EACH ROW EXECUTE PROCEDURE m_pub.set_updated_at_column();
+
+COMMENT ON TABLE m_pub.company_person IS
+  E'@omit create,update,delete,filter,all';
 
 -- auth functions
 CREATE FUNCTION m_pub.register_person(
