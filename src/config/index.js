@@ -8,7 +8,7 @@ const {
   DATABASE = "m",
   NODE_ENV = "development",
   JWT_SECRET = "lololol",
-  DB_URL = `postgresql://williamhuang@localhost/${DATABASE}`
+  DB_URL = `postgresql://postgres@localhost/${DATABASE}`
 } = process.env;
 
 export const ENV = NODE_ENV;
@@ -17,7 +17,7 @@ export const isTest = NODE_ENV === "test";
 export const isProduction = NODE_ENV === "production";
 
 const params = url.parse(
-  isTest ? `postgresql://williamhuang@db/${DATABASE}` : DB_URL
+  isTest ? `postgresql://postgres@db/${DATABASE}` : DB_URL
 );
 const auth = params.auth.split(":");
 

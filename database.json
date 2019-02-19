@@ -1,14 +1,14 @@
 {
   "dev": {
     "driver": "pg",
-    "user": "williamhuang",
+    "user": "postgres",
     "password": "",
     "host": "localhost",
     "database": "m"
   },
   "test": {
     "driver": "pg",
-    "user": "williamhuang",
+    "user": "postgres",
     "host": "db",
     "database": "m"
   },

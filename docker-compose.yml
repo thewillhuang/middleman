@@ -8,5 +8,5 @@ services:
   db:
     image: mdillon/postgis
     environment:
-      POSTGRES_USER: "williamhuang"
+      POSTGRES_USER: "postgres"
       POSTGRES_DB: "m"

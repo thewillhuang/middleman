@@ -9,12 +9,10 @@
     "postgraphile": "^4.3.3"
   },
   "scripts": {
-    "dev": "yarn clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql --exec 'yarn builddev'",
-    "prebuilddev": "yarn db:r",
+    "dev": "npm run clean && webpack --progress --mode=development --watch & nodemon -e js,jsx,sql --exec 'npm run builddev'",
+    "prebuilddev": "npm run db:r",
     "builddev": "NODE_ENV=development DEBUG=graphile-build-pg:sql node dist/main.js",
-    "backup": "mv ./node_modules/ ./node_modules_bak/ && mv ./.yarnclean_bak ./.yarnclean",
-    "restore": "rm -fr node_modules && mv ./node_modules_bak/ ./node_modules/ &&  mv ./.yarnclean ./.yarnclean_bak",
-    "build": "yarn clean && webpack --mode=production && yarn run backup && yarn --ignore-engines --prod",
+    "build": "npm run clean && webpack --mode=production && npm run run backup && npm run --ignore-engines --prod",
     "clean": "rm -fr dist",
     "makeCache": "node ./dist/makeCache.js",
     "stage": "up staging",
@@ -22,13 +20,13 @@
     "open": "up url -o",
     "test": "jest --forceExit",
     "test:docker": "docker-compose down && docker-compose build && docker-compose up --exit-code-from webapp",
-    "test:local": "yarn db:r; NODE_ENV=development jest --verbose --forceExit",
+    "test:local": "npm run db:r; NODE_ENV=development jest --verbose --forceExit",
     "logs": "up logs -f",
     "db:create": "createdb m",
     "db:drop": "dropdb m",
     "db:up": "db-migrate up",
     "db:up:test": "db-migrate up -e test",
-    "db:r": "yarn db:down && yarn db:up",
+    "db:r": "npm run db:down && npm run db:up",
     "db:down": "db-migrate down"
   },
   "husky": {
