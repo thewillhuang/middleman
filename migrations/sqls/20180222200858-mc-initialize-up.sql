@@ -135,6 +135,7 @@ CREATE TYPE m_pub.task_type AS ENUM (
   'pet hair cutting ',
   'pet services',
   'pet walking',
+  'pet training',
   'photoshop',
   'property management',
   'event management',
