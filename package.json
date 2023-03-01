@@ -51,7 +51,7 @@
     "babel-preset-env": "^1.6.1",
     "babel-preset-stage-0": "^6.24.1",
     "babel-runtime": "^6.26.0",
-    "db-migrate": "^0.11.1",
+    "db-migrate": "^0.11.13",
     "db-migrate-pg": "^0.4.0",
     "eslint": "^4.18.0",
     "eslint-config-prettier": "^2.9.0",
